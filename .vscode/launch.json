@@ -1,0 +1,28 @@
+{
+	"configurations": [
+		{
+			"type": "lldb",
+			"request": "launch",
+			"sourceLanguages": [
+				"swift"
+			],
+			"name": "Debug nostr-cc",
+			"program": "${workspaceFolder:nostr-kit}/.build/debug/nostr-cc",
+			"args": [],
+			"cwd": "${workspaceFolder:nostr-kit}",
+			"preLaunchTask": "swift: Build Debug nostr-cc"
+		},
+		{
+			"type": "lldb",
+			"request": "launch",
+			"sourceLanguages": [
+				"swift"
+			],
+			"name": "Release nostr-cc",
+			"program": "${workspaceFolder:nostr-kit}/.build/release/nostr-cc",
+			"args": [],
+			"cwd": "${workspaceFolder:nostr-kit}",
+			"preLaunchTask": "swift: Build Release nostr-cc"
+		}
+	]
+}
