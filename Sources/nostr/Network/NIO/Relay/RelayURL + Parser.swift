@@ -1,6 +1,6 @@
 /// Reader object for parsing String buffers
 extension Relay.URL {
-	public struct Parser: Sendable {
+	internal struct Parser: Sendable {
 		public enum Error: Swift.Error {
 			case overflow
 			case unexpected
@@ -65,7 +65,7 @@ extension Relay.URL.Parser {
     }
 }
 
-public extension Relay.URL.Parser {
+extension Relay.URL.Parser {
     /// Return current character
     /// - Throws: .overflow
     /// - Returns: Current character
@@ -329,7 +329,7 @@ public extension Relay.URL.Parser {
 }
 
 /// Public versions of internal functions which include tests for overflow
-public extension Relay.URL.Parser {
+extension Relay.URL.Parser {
     /// Return the character at the current position
     /// - Throws: .overflow
     /// - Returns: Unicode.Scalar

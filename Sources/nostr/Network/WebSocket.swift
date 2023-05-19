@@ -5,17 +5,24 @@ import NIOHTTP1
 public struct WebSocket {}
 
 public extension WebSocket {
-	typealias URL = Relay.URL
+	enum Data:Equatable, Sendable {
+		case text(String)
+		case binary(ByteBuffer)
+		case ping
+		case pong
+	}
+
+	internal typealias URL = Relay.URL
 	internal class Handler:ChannelDuplexHandler {
 		/// The handler for pings and pongs as they are handled in the channel. The first parameter is the frame that was received, the second is whether or not it was a pong.
 		public typealias PingPongHandler = (WebSocketFrame, Bool /*isPong?*/ ) -> Void
 		public typealias InboundIn = WebSocketFrame
-		public typealias InboundOut = WebSocketData
-		public typealias OutboundIn = WebSocketData
+		public typealias InboundOut = Data
+		public typealias OutboundIn = Data
 		public typealias OutboundOut = WebSocketFrame
 		
 		let pingPongHandler:PingPongHandler
-		var webSocketFrameSequence:WebSocketFrameSequence? = nil
+		var webSocketFrameSequence:FrameSequence? = nil
 		let url:Relay.URL
 
 		public init(url:URL, _ handler:@escaping(PingPongHandler)) {
@@ -35,7 +42,7 @@ public extension WebSocket {
 					frameSeq.append(frame)
 					self.webSocketFrameSequence = frameSeq
 				} else {
-					var frameSeq = WebSocketFrameSequence(type: .text)
+					var frameSeq = FrameSequence(type: .text)
 					frameSeq.append(frame)
 					self.webSocketFrameSequence = frameSeq
 				}
@@ -44,7 +51,7 @@ public extension WebSocket {
 					frameSeq.append(frame)
 					self.webSocketFrameSequence = frameSeq
 				} else {
-					var frameSeq = WebSocketFrameSequence(type: .binary)
+					var frameSeq = FrameSequence(type: .binary)
 					frameSeq.append(frame)
 					self.webSocketFrameSequence = frameSeq
 				}

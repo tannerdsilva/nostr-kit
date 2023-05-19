@@ -1,6 +1,6 @@
 import ArgumentParser
 import Foundation
-import nostr_kit
+import nostr
 
 @main
 struct CLI:AsyncParsableCommand {

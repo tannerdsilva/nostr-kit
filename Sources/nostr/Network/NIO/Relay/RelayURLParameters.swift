@@ -118,7 +118,7 @@ extension FlatDictionary: Sendable where Key: Sendable, Value: Sendable {}
 
 /// Store for parameters key, value pairs extracted from URI
 extension Relay.URL {
-	public struct Parameters: Sendable {
+	internal struct Parameters: Sendable {
 		public typealias Collection = FlatDictionary<Substring, Substring>
 		internal var parameters: Collection
 
