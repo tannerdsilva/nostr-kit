@@ -1,20 +1,30 @@
 {
   "pins" : [
     {
-      "identity" : "clmdb",
+      "identity" : "quickjson",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tannerdsilva/CLMDB.git",
+      "location" : "https://github.com/tannerdsilva/QuickJSON.git",
       "state" : {
-        "revision" : "4ce5826424f8e65f395efc5b4c611479384722b1",
-        "version" : "0.9.30"
+        "revision" : "2593b1e4c2a39eef87291e5e0ec88057a83c3dde",
+        "version" : "0.0.5"
       }
     },
     {
-      "identity" : "quicklmdb",
+      "identity" : "rawdog",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tannerdsilva/QuickLMDB.git",
+      "location" : "https://github.com/tannerdsilva/rawdog.git",
       "state" : {
-        "revision" : "6454f034d5e03fbd9bb4b6b1fe1635a8471bf0e8"
+        "revision" : "c4c5c3328315c97e2258fc5606b87d9d74a80937",
+        "version" : "0.0.7"
+      }
+    },
+    {
+      "identity" : "secp256k1.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/GigaBitcoin/secp256k1.swift",
+      "state" : {
+        "revision" : "1a14e189def5eaa92f839afdd2faad8e43b61a6e",
+        "version" : "0.12.2"
       }
     },
     {
@@ -96,6 +106,15 @@
       "state" : {
         "revision" : "025bcb1165deab2e20d4eaba79967ce73013f496",
         "version" : "1.2.1"
+      }
+    },
+    {
+      "identity" : "yyjson",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ibireme/yyjson.git",
+      "state" : {
+        "revision" : "09ccaa449e01879e23f68d8be165e78e65334443",
+        "version" : "0.7.0"
       }
     }
   ],

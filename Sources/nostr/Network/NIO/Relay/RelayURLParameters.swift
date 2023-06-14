@@ -11,106 +11,106 @@
 /// iterate through the key,value pairs you can access all values
 /// for a key
 public struct FlatDictionary<Key: Hashable, Value>: Collection, ExpressibleByDictionaryLiteral {
-    public typealias Element = (key: Key, value: Value)
-    public typealias Index = Array<Element>.Index
+	public typealias Element = (key: Key, value: Value)
+	public typealias Index = Array<Element>.Index
 
-    // MARK: Collection requirements
+	// MARK: Collection requirements
 
-    /// The position of the first element
-    public var startIndex: Index { self.elements.startIndex }
-    /// The position of the element just after the last element
-    public var endIndex: Index { self.elements.endIndex }
-    /// Access element at specific position
-    public subscript(_ index: Index) -> Element { return self.elements[index] }
-    /// Returns the index immediately after the given index
-    public func index(after index: Index) -> Index { self.elements.index(after: index) }
+	/// The position of the first element
+	public var startIndex: Index { self.elements.startIndex }
+	/// The position of the element just after the last element
+	public var endIndex: Index { self.elements.endIndex }
+	/// Access element at specific position
+	public subscript(_ index: Index) -> Element { return self.elements[index] }
+	/// Returns the index immediately after the given index
+	public func index(after index: Index) -> Index { self.elements.index(after: index) }
 
-    /// Create a new FlatDictionary
-    public init() {
-        self.elements = []
-        self.hashKeys = []
-    }
+	/// Create a new FlatDictionary
+	public init() {
+		self.elements = []
+		self.hashKeys = []
+	}
 
-    /// Create a new FlatDictionary initialized with a dictionary literal
-    public init(dictionaryLiteral elements: (Key, Value)...) {
-        self.elements = elements.map { (key: $0.0, value: $0.1) }
-        self.hashKeys = elements.map {
-            Self.hashKey($0.0)
-        }
-    }
+	/// Create a new FlatDictionary initialized with a dictionary literal
+	public init(dictionaryLiteral elements: (Key, Value)...) {
+		self.elements = elements.map { (key: $0.0, value: $0.1) }
+		self.hashKeys = elements.map {
+			Self.hashKey($0.0)
+		}
+	}
 
-    /// Create a new FlatDictionary from an array of key value pairs
-    public init(_ values: [Element]) {
-        self.elements = values
-        self.hashKeys = values.map {
-            Self.hashKey($0.key)
-        }
-    }
+	/// Create a new FlatDictionary from an array of key value pairs
+	public init(_ values: [Element]) {
+		self.elements = values
+		self.hashKeys = values.map {
+			Self.hashKey($0.key)
+		}
+	}
 
-    /// Access the value associated with a given key for reading and writing
-    ///
-    /// Because FlatDictionary allows for key clashes this function will
-    /// return the first entry in the array with the associated key
-    public subscript(_ key: Key) -> Value? {
-        get {
-            let hashKey = Self.hashKey(key)
-            if let index = hashKeys.firstIndex(of: hashKey) {
-                return self.elements[index].value
-            } else {
-                return nil
-            }
-        }
-        set {
-            let hashKey = Self.hashKey(key)
-            if let index = hashKeys.firstIndex(of: hashKey) {
-                if let newValue = newValue {
-                    self.elements[index].value = newValue
-                } else {
-                    self.elements.remove(at: index)
-                    self.hashKeys.remove(at: index)
-                }
-            } else if let newValue = newValue {
-                self.elements.append((key: key, value: newValue))
-                self.hashKeys.append(hashKey)
-            }
-        }
-    }
+	/// Access the value associated with a given key for reading and writing
+	///
+	/// Because FlatDictionary allows for key clashes this function will
+	/// return the first entry in the array with the associated key
+	public subscript(_ key: Key) -> Value? {
+		get {
+			let hashKey = Self.hashKey(key)
+			if let index = hashKeys.firstIndex(of: hashKey) {
+				return self.elements[index].value
+			} else {
+				return nil
+			}
+		}
+		set {
+			let hashKey = Self.hashKey(key)
+			if let index = hashKeys.firstIndex(of: hashKey) {
+				if let newValue = newValue {
+					self.elements[index].value = newValue
+				} else {
+					self.elements.remove(at: index)
+					self.hashKeys.remove(at: index)
+				}
+			} else if let newValue = newValue {
+				self.elements.append((key: key, value: newValue))
+				self.hashKeys.append(hashKey)
+			}
+		}
+	}
 
-    ///  Return if dictionary has this value
-    /// - Parameter key:
-    public func has(_ key: Key) -> Bool {
-        let hashKey = Self.hashKey(key)
-        return self.hashKeys.firstIndex(of: hashKey) != nil
-    }
+	///  Return if dictionary has this value
+	/// - Parameter key:
+	public func has(_ key: Key) -> Bool {
+		let hashKey = Self.hashKey(key)
+		return self.hashKeys.firstIndex(of: hashKey) != nil
+	}
 
-    /// Return all the values, associated with a given key
-    public func getAll(for key: Key) -> [Value] {
-        var values: [Value] = []
-        let hashKey = Self.hashKey(key)
+	/// Return all the values, associated with a given key
+	public func getAll(for key: Key) -> [Value] {
+		var values: [Value] = []
+		let hashKey = Self.hashKey(key)
 
-        for hashIndex in 0..<self.hashKeys.count {
-            if self.hashKeys[hashIndex] == hashKey {
-                values.append(self.elements[hashIndex].value)
-            }
-        }
-        return values
-    }
+		for hashIndex in 0..<self.hashKeys.count {
+			if self.hashKeys[hashIndex] == hashKey {
+				values.append(self.elements[hashIndex].value)
+			}
+		}
+		return values
+	}
 
-    /// Append a new key value pair to the list of key value pairs
-    public mutating func append(key: Key, value: Value) {
-        let hashKey = Self.hashKey(key)
-        self.elements.append((key: key, value: value))
-        self.hashKeys.append(hashKey)
-    }
+	/// Append a new key value pair to the list of key value pairs
+	public mutating func append(key: Key, value: Value) {
+		let hashKey = Self.hashKey(key)
+		self.elements.append((key: key, value: value))
+		self.hashKeys.append(hashKey)
+	}
 
-    private static func hashKey(_ key: Key) -> Int {
-        var hasher = Hasher()
-        hasher.combine(key)
-        return hasher.finalize()
-    }
+	private static func hashKey(_ key: Key) -> Int {
+		var hasher = Hasher()
+		hasher.combine(key)
+		return hasher.finalize()
+	}
 
-    private var elements: [Element]
-    private var hashKeys: [Int]
+	private var elements: [Element]
+	private var hashKeys: [Int]
 }
 
 // FlatDictionary is Sendable when Key and Value are Sendable
@@ -118,7 +118,7 @@ extension FlatDictionary: Sendable where Key: Sendable, Value: Sendable {}
 
 /// Store for parameters key, value pairs extracted from URI
 extension Relay.URL {
-	internal struct Parameters: Sendable {
+	public struct Parameters: Sendable {
 		public typealias Collection = FlatDictionary<Substring, Substring>
 		internal var parameters: Collection
 
@@ -161,7 +161,7 @@ extension Relay.URL {
 		/// - Parameter s: parameter id
 		public func require(_ s: String) throws -> String {
 			guard let param = self.parameters[s[...]].map({ String($0) }) else {
-				throw HBHTTPError(.badRequest)
+				throw HTTPError(.badRequest)
 			}
 			return param
 		}
@@ -174,7 +174,7 @@ extension Relay.URL {
 			guard let param = self.parameters[s[...]],
 				let result = T(String(param))
 			else {
-				throw HBHTTPError(.badRequest)
+				throw HTTPError(.badRequest)
 			}
 			return result
 		}
@@ -200,7 +200,7 @@ extension Relay.URL {
 		public func requireAll<T: LosslessStringConvertible>(_ s: String, as: T.Type) throws -> [T] {
 			return try self.parameters.getAll(for: s[...]).compactMap {
 				guard let result = T(String($0)) else {
-					throw HBHTTPError(.badRequest)
+					throw HTTPError(.badRequest)
 				}
 				return result
 			}
@@ -233,15 +233,15 @@ extension Relay.URL {
 }
 
 extension Relay.URL.Parameters: Collection {
-    public typealias Index = Collection.Index
-    public var startIndex: Index { self.parameters.startIndex }
-    public var endIndex: Index { self.parameters.endIndex }
-    public subscript(_ index: Index) -> Collection.Element { return self.parameters[index] }
-    public func index(after index: Index) -> Index { self.parameters.index(after: index) }
+	public typealias Index = Collection.Index
+	public var startIndex: Index { self.parameters.startIndex }
+	public var endIndex: Index { self.parameters.endIndex }
+	public subscript(_ index: Index) -> Collection.Element { return self.parameters[index] }
+	public func index(after index: Index) -> Index { self.parameters.index(after: index) }
 }
 
 extension Relay.URL.Parameters: CustomStringConvertible {
-    public var description: String {
-        String(describing: self.parameters)
-    }
+	public var description: String {
+		String(describing: self.parameters)
+	}
 }

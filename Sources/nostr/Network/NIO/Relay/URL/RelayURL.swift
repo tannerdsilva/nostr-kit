@@ -2,43 +2,48 @@
 extension Relay {
 	/// Simple URL parser
 	public struct URL: Sendable, CustomStringConvertible, ExpressibleByStringLiteral {
-		public struct Scheme: RawRepresentable, Equatable {
+		
+		/// The scheme for the URL
+		public struct Scheme:Equatable {
 			public let rawValue: String
-
 			public init(rawValue: String) {
 				self.rawValue = rawValue
 			}
 
+			/// Insecure websocket protocol
 			public static var ws: Self { return .init(rawValue: "ws") }
+
+			/// Secure websocket protocol
 			public static var wss: Self { return .init(rawValue: "wss") }
 		}
 
-		public let string: String
+		/// The string representation of the URL
+		public let string:String
 
 		/// URL scheme
-		public var scheme: Scheme? { return self._scheme.map { Scheme.init(rawValue: $0.string) } }
+		public var scheme:Scheme? { return self._scheme.map { Scheme.init(rawValue: $0.string) } }
 		/// URL host
-		public var host: String? { return self._host.map({ $0.string }) }
+		public var host:String? { return self._host.map({ $0.string }) }
 		/// URL port
-		public var port: Int? { return self._port.map { Int($0.string) } ?? nil }
+		public var port:Int? { return self._port.map { Int($0.string) } ?? nil }
 		/// URL path
-		public var path: String { return self._path.map( { $0.string }) ?? "/" }
+		public var path:String { return self._path.map( { $0.string }) ?? "/" }
 		/// URL query
-		public var query: String? { return self._query.map { String($0.string) }}
+		public var query:String? { return self._query.map { String($0.string) }}
 		/// URL query parameter map
-		public var queryParameters: Relay.URL.Parameters { return .init(fromQuery: self._query) }
+		public var queryParameters:Relay.URL.Parameters { return .init(fromQuery: self._query) }
 
-		private let _scheme: URL.Parser?
-		private let _host: URL.Parser?
-		private let _port: URL.Parser?
-		private let _path: URL.Parser?
-		private let _query: URL.Parser?
+		private let _scheme:URL.Parser?
+		private let _host:URL.Parser?
+		private let _port:URL.Parser?
+		private let _path:URL.Parser?
+		private let _query:URL.Parser?
 
-		public var description: String { self.string }
+		public var description:String { self.string }
 
 		/// Initialize `HBURL` from `String`
 		/// - Parameter string: input string
-		public init(_ string: String) {
+		public init(_ string:String) {
 			enum ParsingState {
 				case readingScheme
 				case readingHost
@@ -47,12 +52,12 @@ extension Relay {
 				case readingQuery
 				case finished
 			}
-			var scheme: URL.Parser?
-			var host: URL.Parser?
-			var port: URL.Parser?
-			var path: URL.Parser?
-			var query: URL.Parser?
-			var state: ParsingState = .readingScheme
+			var scheme:URL.Parser?
+			var host:URL.Parser?
+			var port:URL.Parser?
+			var path:URL.Parser?
+			var query:URL.Parser?
+			var state:ParsingState = .readingScheme
 			if string.first == "/" {
 				state = .readingPath
 			}
