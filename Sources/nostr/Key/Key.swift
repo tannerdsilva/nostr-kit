@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 #if os(Linux)
 import Glibc
 #else
@@ -115,12 +117,14 @@ extension Key:RAW_comparable {
 	}
 }
 
+/// LosslessStringConvertible conformance 
+/// - based on a hex-encoded representation of the key bytes
 extension Key:LosslessStringConvertible {
 	/// implements a hex-encoded representation of the key bytes
 	public var description:String {
 		get {
 			self.asRAW_val({
-				return Hex.encode($0)
+				return Hex.encode($0, lowercaseOutput:true)
 			})
 		}
 	}

@@ -1,12 +1,23 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import RAW
 
 public struct Bech32 {
+
+	/// bech32 encode a string
+	/// - parameters:
+	///		- hrp: human readable part
+	/// 	- input: data to encode
 	public static func encode(hrp:String, _ input:RAW_val) -> String {
 		let bits = eightToFiveBits(input:input)
 		let checksum = checksum(hrp:hrp, data:bits)
 		return ("\(hrp)" + "1" + String((bits + checksum).map { Self.encCharset[Int($0)] }))
 	}
 
+	/// decode a bech32 encoded string
+	/// - parameters:
+	/// 	- str: string to decode
+	/// - throws: ``Bech32.Error``
 	public static func decode(_ str:String) throws -> (hrp:String, data:[UInt8]) {
 		let strBytes = str.utf8
 		guard strBytes.count <= 2024 else {

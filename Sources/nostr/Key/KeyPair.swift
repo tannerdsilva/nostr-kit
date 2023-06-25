@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 #if os(Linux)
 import Glibc
 #else
@@ -7,6 +9,13 @@ import Darwin.C
 import RAW
 import secp256k1
 
+extension KeyPair {
+	enum Errow:Swift.Error {
+		/// thrown when initializing a keypair from a secret key that is invalid
+		case invalidSecretKey
+	}
+}
+
 /// a pairing of public and private keys.
 public struct KeyPair {
 	/// public key of the keypair
@@ -14,6 +23,28 @@ public struct KeyPair {
 	
 	/// private key of the keypair
 	public let seckey:SecretKey
+
+	/// initialize a keypair from an existing secret key.
+	/// - throws: `KeyPair.Errow.invalidSecretKey` if the secret key is invalid
+	public init(seckey:SecretKey) throws {
+		do {
+			let getKeys = try seckey.asRAW_val { rval in
+				let secRaw = try secp256k1.Signing.PrivateKey(rawRepresentation:Array(rval))
+				let getBytes = secRaw.publicKey.xonly.bytes
+				let pubkey = getBytes.asRAW_val({ rawVal in
+					return PublicKey(rawVal)!
+				})
+				let secK = secRaw.rawRepresentation.bytes.asRAW_val { secVal in
+					return SecretKey(secVal)!
+				}
+				return (pubkey, secK)
+			}
+			self.pubkey = getKeys.0
+			self.seckey = getKeys.1
+		} catch {
+			throw KeyPair.Errow.invalidSecretKey
+		}
+	}
 	
 	/// initialize a keypair from an existing public and private key pair
 	public init(pubkey:PublicKey, seckey:SecretKey) {
@@ -24,10 +55,10 @@ public struct KeyPair {
 	/// generate a new keypair
 	public static func generateNew() throws -> Self {
 		let genesis: secp256k1.Signing.PrivateKey = try secp256k1.Signing.PrivateKey()
-		let privKey = genesis.dataRepresentation.bytes.asRAW_val({ keyVal in
+		let privKey = genesis.rawRepresentation.bytes.asRAW_val({ keyVal in
 			return Key(keyVal)!
 		})
-		let pubKey = genesis.publicKey.dataRepresentation.bytes.asRAW_val({ keyVal in
+		let pubKey = genesis.publicKey.xonly.bytes.asRAW_val({ keyVal in
 			return Key(keyVal)!
 		})
 		return KeyPair(pubkey:pubKey, seckey:privKey)

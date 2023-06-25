@@ -1,11 +1,14 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import RAW
 
+/// hex related implementations
 public struct Hex {
-	/// thrown when an invalid character is encountered during decoding
+	/// an error that is thrown when an invalid character is encountered during decoding.
 	public struct InvalidInput:Swift.Error {
-		/// the character that caused the error
+		/// the character that caused the error to be thrown.
 		public let character:Character
-		/// the index of the character in the input string
+		/// the index of the character in the input string.
 		public let index:Int
 	}
 

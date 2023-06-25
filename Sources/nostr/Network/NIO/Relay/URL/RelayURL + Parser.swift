@@ -1,7 +1,9 @@
+// (c) tanner silva 2023. all rights reserved.
+
 /// Reader object for parsing String buffers
 extension Relay.URL {
 	internal struct Parser: Sendable {
-		public enum Error:Swift.Error {
+		internal enum Error:Swift.Error {
 			case overflow
 			case unexpected
 			case emptyString
@@ -10,7 +12,7 @@ extension Relay.URL {
 
 		/// create a Parser object
 		/// - parameter string: UTF8 data to parse
-		public init?<Bytes: Collection>(_ utf8Data: Bytes, validateUTF8: Bool = true) where Bytes.Element == UInt8 {
+		internal init?<Bytes: Collection>(_ utf8Data: Bytes, validateUTF8: Bool = true) where Bytes.Element == UInt8 {
 			if let buffer = utf8Data as? [UInt8] {
 				self.buffer = buffer
 			} else {
@@ -25,19 +27,19 @@ extension Relay.URL {
 			}
 		}
 
-		public init(_ string: String) {
+		internal init(_ string: String) {
 			self.buffer = Array(string.utf8)
 			self.index = 0
 			self.range = 0..<self.buffer.endIndex
 		}
 
 		/// return contents of parser as a string
-		public var count: Int {
+		internal var count: Int {
 			return self.range.count
 		}
 
 		/// return contents of parser as a string
-		public var string: String {
+		internal var string: String {
 			return makeString(self.buffer[self.range])
 		}
 
@@ -60,7 +62,7 @@ extension Relay.URL.Parser {
 	}
 
 	/// initialise a parser that parses a section of the buffer attached to this parser
-	func subParser(_ range: Range<Int>) -> Self {
+	internal func subParser(_ range: Range<Int>) -> Self {
 		return Self(self, range: range)
 	}
 }
@@ -69,7 +71,7 @@ extension Relay.URL.Parser {
 	/// return current character
 	/// - throws: .overflow
 	/// - returns: Current character
-	mutating func character() throws -> Unicode.Scalar {
+	internal mutating func character() throws -> Unicode.Scalar {
 		guard !self.reachedEnd() else { throw Error.overflow }
 		return unsafeCurrentAndAdvance()
 	}
@@ -78,7 +80,7 @@ extension Relay.URL.Parser {
 	/// - Parameter char: character to compare against
 	/// - Throws: .overflow
 	/// - Returns: If current character was the one we expected
-	mutating func read(_ char: Unicode.Scalar) throws -> Bool {
+	internal mutating func read(_ char: Unicode.Scalar) throws -> Bool {
 		let initialIndex = self.index
 		let c = try character()
 		guard c == char else { self.index = initialIndex; return false }
@@ -89,7 +91,7 @@ extension Relay.URL.Parser {
 	/// - Parameter characterSet: Set of characters to compare against
 	/// - Throws: .overflow
 	/// - Returns: If current character is in character set
-	mutating func read(_ characterSet: Set<Unicode.Scalar>) throws -> Bool {
+	internal mutating func read(_ characterSet: Set<Unicode.Scalar>) throws -> Bool {
 		let initialIndex = self.index
 		let c = try character()
 		guard characterSet.contains(c) else { self.index = initialIndex; return false }
@@ -100,7 +102,7 @@ extension Relay.URL.Parser {
 	/// - Parameter string: String to compare against
 	/// - Throws: .overflow, .emptyString
 	/// - Returns: If characters at current position equal string
-	mutating func read(_ string: String) throws -> Bool {
+	internal mutating func read(_ string: String) throws -> Bool {
 		let initialIndex = self.index
 		guard string.count > 0 else { throw Error.emptyString }
 		let subString = try read(count: string.count)
@@ -243,7 +245,7 @@ extension Relay.URL.Parser {
 
 	/// Read from buffer from current position until the end of the buffer
 	/// - Returns: String read from buffer
-	@discardableResult mutating func readUntilTheEnd() -> Relay.URL.Parser {
+	@discardableResult internal mutating func readUntilTheEnd() -> Relay.URL.Parser {
 		let startIndex = self.index
 		self.index = self.range.endIndex
 		return self.subParser(startIndex..<self.index)
@@ -252,7 +254,7 @@ extension Relay.URL.Parser {
 	/// Read while character at current position is the one supplied
 	/// - Parameter while: Unicode.Scalar to check against
 	/// - Returns: String read from buffer
-	@discardableResult mutating func read(while: Unicode.Scalar) -> Int {
+	@discardableResult internal mutating func read(while: Unicode.Scalar) -> Int {
 		var count = 0
 		while !self.reachedEnd(),
 			unsafeCurrent() == `while`
@@ -266,7 +268,7 @@ extension Relay.URL.Parser {
 	/// Read while character at current position is in supplied set
 	/// - Parameter while: character set to check
 	/// - Returns: String read from buffer
-	@discardableResult mutating func read(while characterSet: Set<Unicode.Scalar>) -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(while characterSet: Set<Unicode.Scalar>) -> Relay.URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd(),
 			characterSet.contains(unsafeCurrent())
@@ -279,7 +281,7 @@ extension Relay.URL.Parser {
 	/// Read while character returns true for supplied closure
 	/// - Parameter while: character set to check
 	/// - Returns: String read from buffer
-	@discardableResult mutating func read(while: (Unicode.Scalar) -> Bool) -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(while: (Unicode.Scalar) -> Bool) -> Relay.URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd(),
 			`while`(unsafeCurrent())
@@ -292,7 +294,7 @@ extension Relay.URL.Parser {
 	/// Read while character returns true for supplied KeyPath
 	/// - Parameter while: character set to check
 	/// - Returns: String read from buffer
-	@discardableResult mutating func read(while keyPath: KeyPath<Unicode.Scalar, Bool>) -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(while keyPath: KeyPath<Unicode.Scalar, Bool>) -> Relay.URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd(),
 			unsafeCurrent()[keyPath: keyPath]
@@ -305,7 +307,7 @@ extension Relay.URL.Parser {
 	/// Split parser into sections separated by character
 	/// - Parameter separator: Separator character
 	/// - Returns: arrays of sub parsers
-	mutating func split(separator: Unicode.Scalar) -> [Relay.URL.Parser] {
+	internal mutating func split(separator: Unicode.Scalar) -> [Relay.URL.Parser] {
 		var subParsers: [Relay.URL.Parser] = []
 		while !self.reachedEnd() {
 			do {
@@ -323,7 +325,7 @@ extension Relay.URL.Parser {
 
 	/// Return whether we have reached the end of the buffer
 	/// - Returns: Have we reached the end
-	func reachedEnd() -> Bool {
+	internal func reachedEnd() -> Bool {
 		return self.index == self.range.endIndex
 	}
 }
@@ -333,14 +335,14 @@ extension Relay.URL.Parser {
 	/// Return the character at the current position
 	/// - Throws: .overflow
 	/// - Returns: Unicode.Scalar
-	func current() -> Unicode.Scalar {
+	internal func current() -> Unicode.Scalar {
 		guard !self.reachedEnd() else { return Unicode.Scalar(0) }
 		return unsafeCurrent()
 	}
 
 	/// Move forward one character
 	/// - Throws: .overflow
-	mutating func advance() throws {
+	internal mutating func advance() throws {
 		guard !self.reachedEnd() else { throw Error.overflow }
 		return self.unsafeAdvance()
 	}
@@ -348,7 +350,7 @@ extension Relay.URL.Parser {
 	/// Move forward so many character
 	/// - Parameter amount: number of characters to move forward
 	/// - Throws: .overflow
-	mutating func advance(by amount: Int) throws {
+	internal mutating func advance(by amount: Int) throws {
 		var amount = amount
 		while amount > 0 {
 			guard !self.reachedEnd() else { throw Error.overflow }
@@ -359,7 +361,7 @@ extension Relay.URL.Parser {
 
 	/// Move backwards one character
 	/// - Throws: .overflow
-	mutating func retreat() throws {
+	internal mutating func retreat() throws {
 		guard self.index > self.range.startIndex else { throw Error.overflow }
 		self.index = backOneUTF8Character(at: self.index)
 	}
@@ -367,7 +369,7 @@ extension Relay.URL.Parser {
 	/// Move back so many characters
 	/// - Parameter amount: number of characters to move back
 	/// - Throws: .overflow
-	mutating func retreat(by amount: Int) throws {
+	internal mutating func retreat(by amount: Int) throws {
 		var amount = amount
 		while amount > 0 {
 			guard self.index > self.range.startIndex else { throw Error.overflow }
@@ -377,20 +379,20 @@ extension Relay.URL.Parser {
 	}
 
 	/// Move parser to beginning of string
-	mutating func moveToStart() {
+	internal mutating func moveToStart() {
 		self.index = self.range.startIndex
 	}
 
 	/// Move parser to end of string
-	mutating func moveToEnd() {
+	internal mutating func moveToEnd() {
 		self.index = self.range.endIndex
 	}
 
-	mutating func unsafeAdvance() {
+	internal mutating func unsafeAdvance() {
 		self.index = skipUTF8Character(at: self.index)
 	}
 
-	mutating func unsafeAdvance(by amount: Int) {
+	internal mutating func unsafeAdvance(by amount: Int) {
 		var amount = amount
 		while amount > 0 {
 			self.index = skipUTF8Character(at: self.index)
@@ -400,14 +402,14 @@ extension Relay.URL.Parser {
 }
 
 /// extend Parser to conform to Sequence
-extension Relay.URL.Parser: Sequence {
-	public typealias Element = Unicode.Scalar
+extension Relay.URL.Parser:Sequence {
+	internal typealias Element = Unicode.Scalar
 
-	public __consuming func makeIterator() -> Iterator {
+	internal func makeIterator() -> Iterator {
 		return Iterator(self)
 	}
 
-	public struct Iterator: IteratorProtocol {
+	internal struct Iterator: IteratorProtocol {
 		public typealias Element = Unicode.Scalar
 
 		var parser: Relay.URL.Parser
@@ -424,22 +426,22 @@ extension Relay.URL.Parser: Sequence {
 }
 
 // internal versions without checks
-private extension Relay.URL.Parser {
-	func unsafeCurrent() -> Unicode.Scalar {
+extension Relay.URL.Parser {
+	internal func unsafeCurrent() -> Unicode.Scalar {
 		return decodeUTF8Character(at: self.index).0
 	}
 
-	mutating func unsafeCurrentAndAdvance() -> Unicode.Scalar {
+	internal mutating func unsafeCurrentAndAdvance() -> Unicode.Scalar {
 		let (unicodeScalar, index) = decodeUTF8Character(at: self.index)
 		self.index = index
 		return unicodeScalar
 	}
 
-	mutating func _setPosition(_ index: Int) {
+	internal mutating func _setPosition(_ index: Int) {
 		self.index = index
 	}
 
-	func makeString<Bytes: Collection>(_ bytes: Bytes) -> String where Bytes.Element == UInt8, Bytes.Index == Int {
+	internal func makeString<Bytes: Collection>(_ bytes: Bytes) -> String where Bytes.Element == UInt8, Bytes.Index == Int {
 		if let string = bytes.withContiguousStorageIfAvailable({ String(decoding: $0, as: Unicode.UTF8.self) }) {
 			return string
 		} else {
@@ -450,7 +452,7 @@ private extension Relay.URL.Parser {
 
 // UTF8 parsing
 extension Relay.URL.Parser {
-	func decodeUTF8Character(at index: Int) -> (Unicode.Scalar, Int) {
+	internal func decodeUTF8Character(at index: Int) -> (Unicode.Scalar, Int) {
 		var index = index
 		let byte1 = UInt32(buffer[index])
 		var value: UInt32
@@ -477,14 +479,14 @@ extension Relay.URL.Parser {
 		return (unicodeScalar, index + 1)
 	}
 
-	func skipUTF8Character(at index: Int) -> Int {
+	internal func skipUTF8Character(at index: Int) -> Int {
 		if self.buffer[index] & 0x80 != 0x80 { return index + 1 }
 		if self.buffer[index + 1] & 0xC0 == 0x80 { return index + 2 }
 		if self.buffer[index + 2] & 0xC0 == 0x80 { return index + 3 }
 		return index + 4
 	}
 
-	func backOneUTF8Character(at index: Int) -> Int {
+	internal func backOneUTF8Character(at index: Int) -> Int {
 		if self.buffer[index - 1] & 0xC0 != 0x80 { return index - 1 }
 		if self.buffer[index - 2] & 0xC0 != 0x80 { return index - 2 }
 		if self.buffer[index - 3] & 0xC0 != 0x80 { return index - 3 }
@@ -492,7 +494,7 @@ extension Relay.URL.Parser {
 	}
 
 	/// same as `decodeUTF8Character` but adds extra validation, so we can make assumptions later on in decode and skip
-	func validateUTF8Character(at index: Int) -> (Unicode.Scalar?, Int) {
+	internal func validateUTF8Character(at index: Int) -> (Unicode.Scalar?, Int) {
 		var index = index
 		let byte1 = UInt32(buffer[index])
 		var value: UInt32
@@ -526,7 +528,7 @@ extension Relay.URL.Parser {
 	}
 
 	/// return if the buffer is valid UTF8
-	func validateUTF8() -> Bool {
+	internal func validateUTF8() -> Bool {
 		var index = self.range.startIndex
 		while index < self.range.endIndex {
 			let (scalar, newIndex) = self.validateUTF8Character(at: index)
@@ -573,7 +575,7 @@ extension Relay.URL.Parser {
 	]
 
 	/// percent decode UTF8
-	public func percentDecode() -> String? {
+	internal func percentDecode() -> String? {
 		struct DecodeError: Swift.Error {}
 		func _percentDecode(_ original: ArraySlice<UInt8>, _ bytes: UnsafeMutableBufferPointer<UInt8>) throws -> Int {
 			var newIndex = 0
@@ -618,11 +620,11 @@ extension Relay.URL.Parser {
 }
 
 extension Unicode.Scalar {
-	public var isWhitespace: Bool {
+	internal var isWhitespace: Bool {
 		return properties.isWhitespace
 	}
 
-	public var isNewline: Bool {
+	internal var isNewline: Bool {
 		switch self.value {
 		case 0x000A...0x000D /* LF ... CR */: return true
 		case 0x0085 /* NEXT LINE (NEL) */: return true
@@ -632,15 +634,15 @@ extension Unicode.Scalar {
 		}
 	}
 
-	public var isNumber: Bool {
+	internal var isNumber: Bool {
 		return properties.numericType != nil
 	}
 
-	public var isLetter: Bool {
+	internal var isLetter: Bool {
 		return properties.isAlphabetic
 	}
 
-	public var isLetterOrNumber: Bool {
+	internal var isLetterOrNumber: Bool {
 		return self.isLetter || self.isNumber
 	}
 }

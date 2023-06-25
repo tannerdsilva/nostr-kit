@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import CNIOSHA1
 
 /// SHA1 hashing implementation. 

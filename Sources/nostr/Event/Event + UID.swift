@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 #if os(Linux)
 	import Glibc
 #else
@@ -7,13 +9,14 @@
 import RAW
 
 extension Event {
+	/// a unique identifier for an event. represents the raw 32 byte value of the event UID.
 	public struct UID {
 		internal var bytes: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	}
 }
 
+/// RAW_convertible conformance
 extension Event.UID:RAW_convertible {
-	// RAW_convertible
 	public init?(_ value:RAW_val) {
 		guard value.mv_size == MemoryLayout<Self>.size else {
 			return nil
@@ -28,8 +31,8 @@ extension Event.UID:RAW_convertible {
 	}
 }
 
+/// RAW_comparable conformance
 extension Event.UID:RAW_comparable {
-	// Lexigraphical sorting here
 	public static let rawCompareFunction:@convention(c) (UnsafePointer<RAW_val>?, UnsafePointer<RAW_val>?) -> Int32 = { a, b in
 		let aData = a!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
 		let bData = b!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
@@ -46,6 +49,7 @@ extension Event.UID:RAW_comparable {
 	}
 }
 
+/// LosslessStringConvertible conformance
 extension Event.UID:LosslessStringConvertible {
 	public init?(_ description: String) {
 		do {
@@ -62,11 +66,12 @@ extension Event.UID:LosslessStringConvertible {
 	}
 	public var description: String {
 		self.asRAW_val { rval in
-			return Hex.encode(rval)
+			return Hex.encode(rval, lowercaseOutput:true)
 		}
 	}
 }
 
+/// Codable conformance
 extension Event.UID:Codable {
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.singleValueContainer()
@@ -82,8 +87,8 @@ extension Event.UID:Codable {
 	}
 }
 
+/// Hashable, Equatable, Comparable conformance
 extension Event.UID:Equatable, Hashable, Comparable {
-	// equatable
 	public static func == (lhs: nostr.Event.UID, rhs: nostr.Event.UID) -> Bool {
 		return lhs.asRAW_val({ lhsVal in
 			return rhs.asRAW_val({ rhsVal in
@@ -92,7 +97,6 @@ extension Event.UID:Equatable, Hashable, Comparable {
 		})
 	}
 	
-	// comparable
 	public static func < (lhs: nostr.Event.UID, rhs: nostr.Event.UID) -> Bool {
 		return lhs.asRAW_val({ lhsVal in
 			return rhs.asRAW_val({ rhsVal in
@@ -101,7 +105,6 @@ extension Event.UID:Equatable, Hashable, Comparable {
 		})
 	}
 
-	// Hashable
 	public func hash(into hasher:inout Hasher) {
 		asRAW_val({ hashVal in
 			hasher.combine(hashVal)

@@ -1,20 +1,21 @@
+// (c) tanner silva 2023. all rights reserved.
 
 extension Relay.URL {
 	/// Splits up a `Relay.URL` into its necessary components for connecting to a relay.
 	internal struct Split {
 		/// the host to connect to (ipv4, ipv6, or dns name)
-		let host:String
+		internal let host:String
 
 		/// the path to connect to
-		let pathQuery:String
+		internal let pathQuery:String
 
 		/// the port to connect to
-		let port:UInt16
+		internal let port:UInt16
 
 		/// is TLS required when connecting to this relay?
-		let tlsRequired:Bool
+		internal let tlsRequired:Bool
 
-		init?(url:Relay.URL) {
+		internal init?(url:Relay.URL) {
 			guard let host: String = url.host else { return nil }
 			self.host = host
 			if let port = url.port {
@@ -31,7 +32,7 @@ extension Relay.URL {
 		}
 
 		/// Return "Host" header value. Only include port if it is different from the default port for the request
-		var hostHeader: String {
+		internal var hostHeader: String {
 			if (self.tlsRequired && self.port != 443) || (!self.tlsRequired && self.port != 80) {
 				return "\(self.host):\(self.port)"
 			}

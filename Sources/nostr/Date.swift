@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 #if os(Linux)
 import Glibc
 #else
@@ -6,10 +8,6 @@ import Darwin.C
 
 import RAW
 
-extension Date {
-	
-
-}
 /// returns a ``time_t`` struct representing the reference date for this Date type.
 /// **NOTE**: the reference date is 00:00:00 UTC on 1 January 2001.
 fileprivate func systemReferenceDate() -> time_t {

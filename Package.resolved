@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tannerdsilva/QuickJSON.git",
       "state" : {
-        "revision" : "2593b1e4c2a39eef87291e5e0ec88057a83c3dde",
-        "version" : "0.0.5"
+        "revision" : "f0df42bff51685cee4d101619fccaf591915b8b2",
+        "version" : "0.0.7"
       }
     },
     {
@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/GigaBitcoin/secp256k1.swift",
       "state" : {
-        "revision" : "1a14e189def5eaa92f839afdd2faad8e43b61a6e",
-        "version" : "0.12.2"
+        "revision" : "1a796f738bdcd84b41d05f92593188b23163e60b",
+        "version" : "0.7.0"
       }
     },
     {

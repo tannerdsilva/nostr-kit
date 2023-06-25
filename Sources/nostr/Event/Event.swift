@@ -1,8 +1,11 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import RAW
 import QuickJSON
 import Crypto
 import secp256k1
 
+/// the infamous nostr event. this is the core data structure that is used to represent all data in the nostr network.
 public struct Event {
 	/// the unique identifier for the event
 	var uid:UID = UID()
@@ -20,8 +23,8 @@ public struct Event {
 	var content:String = ""
 }
 
+/// Codable conformance
 extension nostr.Event:Codable {
-
 	/// initialize using a standard swift decoder
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -79,7 +82,9 @@ extension nostr.Event {
 				return false
 			}
 			let sig64 = try Hex.decode(self.sig)
-			let ev_pubkey = try Hex.decode(String(bytes:sig64, encoding:.utf8)!)
+			let ev_pubkey = self.pubkey.asRAW_val({ pkVal in
+				return Array(pkVal)
+			})
 			let ctx = try secp256k1.Context.create()
 			var xonly_pubkey = secp256k1_xonly_pubkey.init()
 			var ok = secp256k1_xonly_pubkey_parse(ctx, &xonly_pubkey, ev_pubkey)
@@ -98,13 +103,14 @@ extension nostr.Event {
 		let keyBytes = secKey.asRAW_val({ rawVal in
 			return Array(rawVal)
 		})
-		let key = try secp256k1.Signing.PrivateKey(dataRepresentation:keyBytes)
-		let digest = self.uid.asRAW_val({
+		let key = try secp256k1.Signing.PrivateKey(rawRepresentation:keyBytes)
+		var aux_rand = try RandomBytes.generate(size: 64)
+		var digest = self.uid.asRAW_val({
 			return Array($0)
 		})
-		let signature = try key.signature(for: digest)
-		signature.dataRepresentation.bytes.asRAW_val({
-			self.sig = Hex.encode($0)
+		let signature = try key.schnorr.signature(message:&digest, auxiliaryRand:&aux_rand)
+		signature.rawRepresentation.bytes.asRAW_val({ inputVal in
+			self.sig = Hex.encode(inputVal)
 		})
 	}
 }

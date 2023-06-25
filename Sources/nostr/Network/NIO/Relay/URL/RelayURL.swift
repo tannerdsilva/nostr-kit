@@ -1,7 +1,9 @@
-/// Simple URL parser
+// (c) tanner silva 2023. all rights reserved.
+
 extension Relay {
-	/// Simple URL parser
-	public struct URL: Sendable, CustomStringConvertible, ExpressibleByStringLiteral {
+
+	/// a url that represents a relay endpoint
+	public struct URL:Sendable, CustomStringConvertible, ExpressibleByStringLiteral {
 		
 		/// The scheme for the URL
 		public struct Scheme:Equatable {
@@ -127,7 +129,7 @@ extension Relay {
 extension Relay.URL.Parameters {
 	/// Initialize parameters from parser struct
 	/// - Parameter query: parser holding query strings
-	init(fromQuery query: Relay.URL.Parser?) {
+	internal init(fromQuery query: Relay.URL.Parser?) {
 		guard var query = query else {
 			self.parameters = .init()
 			return

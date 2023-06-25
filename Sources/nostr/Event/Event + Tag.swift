@@ -1,14 +1,18 @@
+// (c) tanner silva 2023. all rights reserved.
+
 // event tag
 extension Event {
+	/// an event tag. used to attach various reference types and schemes to events.
 	public struct Tag {
+		/// the type of tag.
 		public let kind:Kind
+		/// additional info associated with the tag
 		public let info:[String]
 	}
 }
 
 // event tag - additional implementations
 extension Event.Tag {
-	/// create an event tag from a string
 	public static func fromPublicKey(_ pubkey:PublicKey) throws -> Event.Tag {
 		return Event.Tag(kind:.pubkey, info:[pubkey.description])
 	}

@@ -1,5 +1,9 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import NIOCore
 import NIOHTTP1
+
+// I dont love what is happening in this file. I feel like these errors need to go somewhere else
 
 /// default HTTP error. provides an HTTP status and a message is so desired
 public struct HTTPError:Swift.Error, Sendable {
