@@ -60,7 +60,6 @@ extension WebSocket {
 		
 		/// append a frame to the sequence
 		internal mutating func append(_ frame: WebSocketFrame) {
-			assert(frame.opcode == self.type.opcode())
 			self.buffers.append(frame.unmaskedData)
 			self.size += frame.unmaskedData.readableBytes
 		}

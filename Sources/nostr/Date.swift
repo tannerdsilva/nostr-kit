@@ -42,11 +42,22 @@ public struct Date {
 	public init() {
 		var makeTime = time_t()
 		time(&makeTime)
-		self.rawVal = difftime(makeTime, refDate)
+		let gmt = gmtime(&makeTime)!
+		gmt.pointee.tm_isdst = 0
+		makeTime = timegm(gmt)
+
+		var Cnow = time_t()
+		let loc = localtime(&Cnow).pointee
+		var offset = Double(loc.tm_gmtoff)
+		if loc.tm_isdst > 0 {
+			offset -= 3600
+		}
+
+		self.rawVal = difftime(makeTime, refDate) - offset
 	}
 
 	public init(unixInterval:Double) {
-		rawVal = unixInterval + 978307200
+		rawVal = unixInterval - 978307200
 	}
 
 	/// basic initializer based on the primitive
@@ -71,18 +82,18 @@ public struct Date {
 
 	/// returns the time interval since unix epoch
 	public func timeIntervalSinceUnixDate() -> Double {
-		return self.rawVal - 978307200
+		return self.rawVal + 978307200
 	}
 }
 
 extension Date:Codable {
 	public init(from decoder:Decoder) throws {
 		let container = try decoder.singleValueContainer()
-		self.init(unixInterval:Double(try container.decode(UInt64.self)))
+		self.init(unixInterval:Double(try container.decode(Int.self)))
 	}
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(UInt64(self.timeIntervalSinceUnixDate()))
+		try container.encode(Int(self.timeIntervalSinceUnixDate()))
 	}
 }
 

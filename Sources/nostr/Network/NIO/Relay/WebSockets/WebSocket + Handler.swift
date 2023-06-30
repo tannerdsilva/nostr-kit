@@ -33,7 +33,7 @@ extension WebSocket {
 		private var autoPingTask:Scheduled<Void>?
 		
 		// frame parsing mechanics
-		enum FrameParsingState {
+		private enum FrameParsingState {
 			/// there is no existing frame fragments in the channel.
 			case idle
 			/// the channel contains existing frame sequence fragments that new data should append to.
@@ -50,6 +50,8 @@ extension WebSocket {
 		internal let writeOp:WebSocketOpcode
 		/// the maximum number of bytes that are allowed to pass through the handler for a single data event.
 		internal let byteLimit:size_t
+		/// relay client configuration
+		internal let configuration:Relay.Client.Configuration
 
 		#if DEBUG
 		/// logger for this instance
@@ -61,9 +63,10 @@ extension WebSocket {
 			self.url = url
 			self.writeOp = writeOp
 			self.byteLimit = configuration.limits.maxWebSocketFrameSize
+			self.configuration = configuration
 			#if DEBUG
 			var makeLogger = WebSocket.logger
-			makeLogger.logLevel = .debug
+			makeLogger.logLevel = .notice
 			makeLogger[metadataKey:"url"] = "\(url)"
 			self.logger = makeLogger
 			#endif
@@ -118,7 +121,7 @@ extension WebSocket {
 				switch result {
 				case .success:
 					#if DEBUG
-					self.logger.debug("sent ping.", metadata:["ping_id": "\(rdat.prefix(3))"])
+					self.logger.debug("sent ping.", metadata:["ping_id": "\(rdat.prefix(2))"])
 					#endif
 					self.waitingOnPong = newPingID
 				case .failure(let error):
@@ -138,7 +141,7 @@ extension WebSocket {
 				// there are existing frame fragments in the channel.
 				case .existingFrameFragments(var existingFrame):
 					// verify that the current fragment matches the existing frame type.
-					guard existingFrame.type == .binary else {
+					guard existingFrame.type.opcode() == frame.opcode else {
 						#if DEBUG
 						self.logger.error("received frame with opcode \(frame.opcode) but existing frame is of type \(existingFrame.type).")
 						#endif
@@ -160,9 +163,8 @@ extension WebSocket {
 							let combinedResult = existingFrame.exportCombinedResult()
 							guard combinedResult.readableBytes <= self.byteLimit else {
 								#if DEBUG
-								self.logger.error("frame sequence exceeded byte limit of \(self.byteLimit).")
+								self.logger.error("frame sequence exceeded byte limit of \(self.byteLimit). waiting for next frame sequence before continuing.")
 								#endif
-								self.frameParsingMode = .waitingForNextFrame
 								return
 							}
 							context.fireChannelRead(self.wrapInboundOut(combinedResult))
@@ -172,7 +174,7 @@ extension WebSocket {
 							existingFrame.append(frame)
 							guard existingFrame.size <= self.byteLimit else {
 								#if DEBUG
-								self.logger.error("frame sequence exceeded byte limit of \(self.byteLimit).")
+								self.logger.error("frame sequence exceeded byte limit of \(self.byteLimit). waiting for next frame sequence before continuing.")
 								#endif
 								self.frameParsingMode = .waitingForNextFrame
 								return
@@ -184,8 +186,29 @@ extension WebSocket {
 				case .idle:
 					var newFrame = FrameSequence(type:FrameSequence.SequenceType(opcode:frame.opcode))
 					newFrame.append(frame)
-					self.frameParsingMode = .existingFrameFragments(newFrame)
+
+					guard newFrame.size <= self.byteLimit else {
+						#if DEBUG
+						self.logger.error("frame sequence exceeded byte limit of \(self.byteLimit). waiting for next frame sequence before continuing.")
+						#endif
+						switch frame.fin {
+							case true:
+								self.frameParsingMode = .idle
+							case false:
+								self.frameParsingMode = .waitingForNextFrame
+						}
+						return
+					}
+					switch frame.fin {
+						case true:
+							let combinedResult = newFrame.exportCombinedResult()
+							context.fireChannelRead(self.wrapInboundOut(combinedResult))
+							return
+						case false:
+							self.frameParsingMode = .existingFrameFragments(newFrame)
+					}
 				
+				break;
 				// the maximum data length for this stream has been tripped
 				case .waitingForNextFrame:
 					switch frame.fin {
@@ -199,7 +222,7 @@ extension WebSocket {
 
 		internal func handlerAdded(context:ChannelHandlerContext) {
 			#if DEBUG
-			self.logger.notice("websocket connected.")
+			self.logger.info("websocket connected.")
 			#endif
 			self.waitingOnPong = nil
 			self.sendPing(context:context).whenFailure { initialPingFailure in
@@ -208,12 +231,12 @@ extension WebSocket {
 				#endif
 				context.fireErrorCaught(Relay.Error.WebSocket.failedToWriteInitialPing(initialPingFailure))
 			}
-			self.initiateAutoPing(context: context, interval: .seconds(10))
+			self.initiateAutoPing(context: context, interval:self.configuration.timeouts.websocketConnectionTimeout)
 		}
 
 		internal func handlerRemoved(context:ChannelHandlerContext) {
 			#if DEBUG
-			self.logger.notice("websocket disconnected.")
+			self.logger.info("websocket disconnected.")
 			#endif
 			self.autoPingTask?.cancel()
 			self.autoPingTask = nil
@@ -225,7 +248,7 @@ extension WebSocket {
 			// get the frame
 			let frame: InboundIn = self.unwrapInboundIn(data)
 			#if DEBUG
-			self.logger.trace("received frame with op code: \(frame.opcode) and body size \(frame.unmaskedData.readableBytes).")
+			self.logger.trace("received frame with op code: \(frame.opcode) and body size \(frame.unmaskedData.readableBytes).", metadata:["fin":"\(frame.fin)"])
 			#endif
 
 			// handle the frame
@@ -254,7 +277,7 @@ extension WebSocket {
 								return
 							}
 							#if DEBUG
-							self.logger.debug("got pong.", metadata:["solicited":"false"])
+							self.logger.debug("got pong (unsolicited).")
 							#endif
 							// unsolicited pongs will reset the internal timeout mechanism
 							if self.autoPingTask != nil {
@@ -270,7 +293,7 @@ extension WebSocket {
 								return
 							}
 							#if DEBUG
-							self.logger.debug("got pong.", metadata:["solicited":"true", "ping_id": "\(Array(frame.data.readableBytesView.prefix(3)))"])
+							self.logger.debug("got pong (solicited).", metadata:["ping_id": "\(Array(frame.data.readableBytesView.prefix(2)))"])
 							#endif
 							self.waitingOnPong = nil
 					}
@@ -301,13 +324,13 @@ extension WebSocket {
 					// debug it
 					#if DEBUG
 					let asArray = Array(frame.unmaskedData.readableBytesView)
-					self.logger.debug("got ping.", metadata:["ping_id": "\(asArray.prefix(3))"])
+					self.logger.debug("got ping.", metadata:["ping_id": "\(asArray.prefix(2))"])
 					writePromise.futureResult.whenComplete({
 						switch $0 {
 						case .success:
-							self.logger.debug("sent pong.", metadata:["ping_id": "\(asArray.prefix(3))"])
+							self.logger.debug("sent pong.", metadata:["ping_id": "\(asArray.prefix(2))"])
 						case .failure(let error):
-							self.logger.error("failed to send pong: '\(error)'", metadata:["ping_id": "\(asArray.prefix(3))"])
+							self.logger.error("failed to send pong: '\(error)'", metadata:["ping_id": "\(asArray.prefix(2))"])
 						}
 					})
 					#endif
@@ -321,6 +344,19 @@ extension WebSocket {
 				case .continuation:
 					switch self.frameParsingMode {
 						case .existingFrameFragments(var existingFrame):
+							guard existingFrame.type.opcode() == frame.opcode else {
+								#if DEBUG
+								self.logger.error("received frame with opcode \(frame.opcode) but existing frame is of type \(existingFrame.type).")
+								#endif
+								// throw an informative error based on the RFC 6455 violation.
+								switch frame.fin {
+									case false:
+										context.fireErrorCaught(Relay.Error.WebSocket.rfc6455Violation(.fragmentControlViolation(.steamOpcodeMismatch(existingFrame.type.opcode(), frame.opcode))))
+									case true:
+										context.fireErrorCaught(Relay.Error.WebSocket.rfc6455Violation(.fragmentControlViolation(.initiationWithUnfinishedContext)))
+								}
+								return
+							}
 							existingFrame.append(frame)
 							self.frameParsingMode = .existingFrameFragments(existingFrame)
 						case .idle:
@@ -344,6 +380,14 @@ extension WebSocket {
 		// write hook
 		internal func write(context: ChannelHandlerContext, data: NIOAny, promise: EventLoopPromise<Void>?) {
 			let message = self.unwrapOutboundIn(data)
+
+
+			#if DEBUG
+			let asArray = Array(message.readableBytesView)
+			let asString = String(bytes:asArray, encoding:.utf8)
+			self.logger.trace("writing '\(asString!)'", metadata:["bytes":"\(message.readableBytes)"])
+			#endif
+
 			let maskingKey = WebSocketMaskingKey.random()
 			let frame = WebSocketFrame(fin: true, opcode:self.writeOp, maskKey:maskingKey, data:message)
 			context.writeAndFlush(self.wrapOutboundOut(frame), promise: promise)

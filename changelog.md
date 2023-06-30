@@ -1,3 +1,21 @@
+## v0.3.0
+
+Improvements to the entire stack.
+
+- WebSocket handling is now improved. Maximum websocket frame size is now configuratble.
+
+- Relay handling is now improved.
+
+- JSON serialization and deserialization improved.
+
+- NIP-42 is now fully implemented.
+
+- Date improved (no longer able to be influenced by local timezones).
+
+	- Unit test tweaked
+	
+- Beginning to build out the mechanisms and tools needed around the `Relay.Handler` in order to facilitate more convenient uses in the future.
+
 ## v0.2.0
 
 Major buildout of the entire stack. Deep and wide-ranging improvements to every part of the project. The conceptual release is now beginning to look more robust and built out now.

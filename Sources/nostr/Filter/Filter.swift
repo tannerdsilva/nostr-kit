@@ -54,33 +54,91 @@ extension Filter:Codable {
 	/// initialize using a standard swift decoder
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
-		self.ids = try container.decode(Set<String>.self, forKey: .ids)
-		self.kinds = try container.decode(Set<nostr.Event.Kind>.self, forKey: .kinds)
-		self.since = try container.decode(Date.self, forKey: .since)
-		self.until = try container.decode(Date.self, forKey: .until)
-		self.authors = try container.decode(Set<nostr.Key>.self, forKey: .authors)
-		self.limit = try container.decode(UInt32.self, forKey: .limit)
-
-		self.tag_referenced_ids = try container.decode(Set<String>.self, forKey: .tag_referenced_ids)
-		self.tag_pubkeys = try container.decode(Set<nostr.Key>.self, forKey: .tag_pubkeys)
-		self.tag_hashtag = try container.decode(Set<String>.self, forKey: .tag_hashtag)
-		self.tag_parameter = try container.decode(Set<String>.self, forKey: .tag_parameter)
+		do {
+			self.ids = try container.decode(Set<String>.self, forKey: .ids)
+		} catch {
+			self.ids = nil
+		}
+		do {
+			self.kinds = try container.decode(Set<nostr.Event.Kind>.self, forKey: .kinds)
+		} catch {
+			self.kinds = nil
+		}
+		do {
+			self.since = try container.decode(Date.self, forKey: .since)
+		} catch {
+			self.since = nil
+		}
+		do {
+			self.until = try container.decode(Date.self, forKey: .until)
+		} catch {
+			self.until = nil
+		}
+		do {
+			self.authors = try container.decode(Set<nostr.Key>.self, forKey: .authors)
+		} catch {
+			self.authors = nil
+		}
+		do {
+			self.limit = try container.decode(UInt32.self, forKey: .limit)
+		} catch {
+			self.limit = nil
+		}
+		do {
+			self.tag_referenced_ids = try container.decode(Set<String>.self, forKey: .tag_referenced_ids)
+		} catch {
+			self.tag_referenced_ids = nil
+		}
+		do {
+			self.tag_pubkeys = try container.decode(Set<nostr.Key>.self, forKey: .tag_pubkeys)
+		} catch {
+			self.tag_pubkeys = nil
+		}
+		do {
+			self.tag_hashtag = try container.decode(Set<String>.self, forKey: .tag_hashtag)
+		} catch {
+			self.tag_hashtag = nil
+		}
+		do {
+			self.tag_parameter = try container.decode(Set<String>.self, forKey: .tag_parameter)
+		} catch {
+			self.tag_parameter = nil
+		}
 	}
 
 	/// export to a standard swift encoder
 	public func encode(to encoder:Swift.Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
-		try container.encode(ids, forKey: .ids)
-		try container.encode(kinds, forKey: .kinds)
-		try container.encode(since, forKey: .since)
-		try container.encode(until, forKey: .until)
-		try container.encode(authors, forKey: .authors)
-		try container.encode(limit, forKey: .limit)
-
-		try container.encode(tag_referenced_ids, forKey: .tag_referenced_ids)
-		try container.encode(tag_pubkeys, forKey: .tag_pubkeys)
-		try container.encode(tag_hashtag, forKey: .tag_hashtag)
-		try container.encode(tag_parameter, forKey: .tag_parameter)
+		if self.ids != nil {
+			try container.encode(ids, forKey: .ids)
+		}
+		if self.kinds != nil {
+			try container.encode(kinds, forKey: .kinds)
+		}
+		if self.since != nil {
+			try container.encode(since, forKey: .since)
+		}
+		if self.until != nil {
+			try container.encode(until, forKey: .until)
+		}
+		if self.authors != nil {
+			try container.encode(authors, forKey: .authors)
+		}
+		if self.limit != nil {
+			try container.encode(limit, forKey: .limit)
+		}
+		if self.tag_referenced_ids != nil {
+			try container.encode(tag_referenced_ids, forKey: .tag_referenced_ids)
+		}
+		if self.tag_pubkeys != nil {
+			try container.encode(tag_pubkeys, forKey: .tag_pubkeys)
+		}
+		if self.tag_hashtag != nil {
+			try container.encode(tag_hashtag, forKey: .tag_hashtag)
+		}
+		if self.tag_parameter != nil {
+			try container.encode(tag_parameter, forKey: .tag_parameter)
+		}
 	}
 }
 

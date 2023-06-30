@@ -23,26 +23,30 @@ extension WebSocket {
 
 		/// called when the channel becomes active.
 		internal func channelActive(context:ChannelHandlerContext) {
-			#if DEBUG
 			let promise = context.eventLoop.makePromise(of:Void.self)
-			#endif
+
 			// writes the HTTP request to the channel immediately.
 			let requestHead = HTTPRequestHead(version: .init(major: 1, minor: 1), method: .GET, uri: self.urlPath)
 			context.write(self.wrapOutboundOut(.head(requestHead)), promise: nil)
 			context.write(self.wrapOutboundOut(.body(.byteBuffer(.init()))), promise:nil)
 			
-			#if DEBUG
 			context.writeAndFlush(self.wrapOutboundOut(.end(nil)), promise: promise)
-			#else
-			context.writeAndFlush(self.wrapOutboundOut(.end(nil)), promise: nil)
-			#endif
 
-			#if DEBUG
 			promise.futureResult.whenComplete({ result in
-				WebSocket.logger.debug("wrote initial HTTP upgrade request.", metadata:["result": "\(result)"])
+				switch result {
+					case .success():
+						#if DEBUG
+						WebSocket.logger.trace("wrote initial HTTP upgrade request.")
+						#endif
+						return
+					case .failure(let error):
+						#if DEBUG
+						WebSocket.logger.error("failed to write initial HTTP upgrade request: \(error)")
+						#endif
+						context.fireErrorCaught(Relay.Error.WebSocket.UpgradeError.failedToWriteInitialRequest(error))
+				}
+				
 			})
-			#endif
-
 		}
 
 		/// close the channel if there is an issue.

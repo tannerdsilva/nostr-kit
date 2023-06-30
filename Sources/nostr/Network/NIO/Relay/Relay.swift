@@ -5,10 +5,44 @@ import var NIOPosix.IPPROTO_TCP
 import var NIOPosix.TCP_NODELAY
 
 public struct Relay {
-	internal let handler:Relay.Handler
 
-	internal init(handler:Relay.Handler) {
+	#if DEBUG
+	internal static let logger = makeDefaultLogger(label:"nostr-net:relay", logLevel:.debug)
+	#endif
+
+	/// the url for the relay.
+	public let url:URL
+
+	/// the channel that is associated with this relay.
+	internal let channel:Channel
+
+	/// the relay handler. this is the primary interface for general purpose 
+	internal let handler:Relay.Handler
+	internal let catcher:Relay.Catcher
+
+	/// the internal initializer for a relay.
+	internal init(url:URL, channel:Channel, handler:Relay.Handler, catcher:Relay.Catcher) {
+		self.url = url
+		self.channel = channel
 		self.handler = handler
+		self.catcher = catcher
+	}
+
+	public func write(_ message:Message) -> EventLoopFuture<Void> {
+		return channel.write(message)
+	}
+
+	public func write(_ event:nostr.Event) -> EventLoopFuture<Void> {
+		let dateProm = self.channel.eventLoop.makePromise(of:Date.self)
+		let publishing = Publishing(relay:self.url, event:event.uid.description, promise:dateProm)
+		let writeFuture = channel.write(nostr.Relay.Message.event(.write(event)))
+		writeFuture.whenSuccess({
+			#if DEBUG
+			Self.logger.info("wrote event to channel.", metadata: ["uid": "\(event.uid.description.prefix(8))"])
+			#endif
+			self.catcher.addPublishingStruct(publishing, forUID:event.uid, channel:self.channel)
+		})
+		return writeFuture
 	}
 }
 

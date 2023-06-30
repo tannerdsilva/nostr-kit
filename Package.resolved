@@ -5,8 +5,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tannerdsilva/QuickJSON.git",
       "state" : {
-        "revision" : "f0df42bff51685cee4d101619fccaf591915b8b2",
-        "version" : "0.0.7"
+        "revision" : "fae445b812ea63b34bbd7ed352cde21a6ae7cbbb",
+        "version" : "0.1.1"
       }
     },
     {
@@ -86,8 +86,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio.git",
       "state" : {
-        "revision" : "2d8e6ca36fe3e8ed74b0883f593757a45463c34d",
-        "version" : "2.53.0"
+        "revision" : "6213ba7a06febe8fef60563a4a7d26a4085783cf",
+        "version" : "2.54.0"
       }
     },
     {

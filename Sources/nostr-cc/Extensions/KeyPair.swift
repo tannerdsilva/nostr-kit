@@ -5,13 +5,24 @@ import struct Foundation.URL
 import struct Foundation.Data
 
 extension KeyPair {
-	public func printCLIDescription(showSecretKey:Bool = false) {
-		let npubString = pubkey.npubString()
+	public func printCLIDescription(showSecretKey:Bool = false, hex:Bool) {
+		let pubString:String
+		switch hex {
+			case true:
+				pubString = pubkey.description
+			case false:
+				pubString = pubkey.npubString()
+		}
 		print(Colors.cyan("Public key:"), terminator:"")
-		print(" \(npubString)")
+		print(" \(pubString)")
 		if showSecretKey {
 			print(Colors.red("Secret key:"), terminator:"")
-			print(" \(seckey.nsecString())")
+			switch hex {
+				case true:
+					print(" \(seckey.description)")
+				case false:
+					print(" \(seckey.nsecString())")
+			}
 		}
 	}
 

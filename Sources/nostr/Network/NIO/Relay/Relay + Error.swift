@@ -1,4 +1,5 @@
 import struct NIOWebSocket.WebSocketOpcode
+import enum NIOHTTP1.HTTPResponseStatus
 
 extension Relay {
 	/// these are all the front-facing errors that a developer may encouter when using the relay
@@ -55,6 +56,18 @@ extension Relay {
 			/// - argument: contains the underlying error that caused the failure.
 			case failedToWriteInitialPing(Swift.Error)
 
+			/// thrown when a TCP connection fails to upgrade to a websocket connection.
+			public enum UpgradeError:Swift.Error {
+				/// a tcp connection was successfully created to the remote peer, however, the HTTP request to upgrade to websockets protocol failed to be written to the remote peer.
+				case failedToWriteInitialRequest(Swift.Error)
+
+				/// the remote peer responded to the HTTP upgrade request with a non-101 status code.
+				case invalidUpgradeResponse(HTTPResponseStatus)
+				
+				/// the remote peer failed to respond to the HTTP upgrade request within the configured timeout interval.
+				case upgradeTimedOut
+			}
+
 			/// the configured timeout interval for the established connection could not be sustained with websocket pings.
 			case connectionTimeout
 
@@ -68,5 +81,8 @@ extension Relay {
 		case connectionBootstrapError
 
 		case noAuthenticationKey
+
+		/// this is thrown when a NIP-42 AUTH assertion is found when the Relay is being used in a client context
+		case authenticationAssertionFound
 	}
 }

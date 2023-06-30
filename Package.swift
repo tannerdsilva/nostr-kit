@@ -9,7 +9,7 @@ var dependencies = [
 	Package.Dependency.package(url:"https://github.com/apple/swift-nio-ssl.git", from:"2.5.0"),
 	Package.Dependency.package(url:"https://github.com/swift-extras/swift-extras-base64.git", from:"0.5.0"),
 	Package.Dependency.package(url:"https://github.com/apple/swift-log.git", from:"1.0.0"),
-	Package.Dependency.package(url:"https://github.com/tannerdsilva/QuickJSON.git", from:"0.0.7"),
+	Package.Dependency.package(url:"https://github.com/tannerdsilva/QuickJSON.git", from:"0.1.1"),
 	Package.Dependency.package(url:"https://github.com/tannerdsilva/rawdog.git", from:"0.0.7"),
 	Package.Dependency.package(url:"https://github.com/GigaBitcoin/secp256k1.swift", "0.7.0"..<"0.8.0"),
 	Package.Dependency.package(url:"https://github.com/apple/swift-crypto.git", from:"2.5.0"),

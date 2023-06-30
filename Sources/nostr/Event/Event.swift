@@ -8,19 +8,22 @@ import secp256k1
 /// the infamous nostr event. this is the core data structure that is used to represent all data in the nostr network.
 public struct Event {
 	/// the unique identifier for the event
-	var uid:UID = UID()
+	public var uid:UID = UID()
 	/// the cryptographic signature for the event
-	var sig:String = ""
+	public var sig:String = ""
 	/// the tags attached to the event
-	var tags = [Tag]()
+	public var tags = [Tag]()
 	/// the author of the event
-	var pubkey = PublicKey()
+	public var pubkey = PublicKey()
 	/// the creation date of the event
-	var created = Date()
+	public var created = Date()
 	/// the kind of event
-	var kind = Kind.text_note
+	public var kind = Kind.text_note
 	/// the content of the event
-	var content:String = ""
+	public var content:String = ""
+
+	/// initialize a new event
+	public init() {}
 }
 
 /// Codable conformance
@@ -99,7 +102,7 @@ extension nostr.Event {
 			return false
 		}
 	}
-	mutating func sign(_ secKey:SecretKey) throws {
+	public mutating func sign(_ secKey:SecretKey) throws {
 		let keyBytes = secKey.asRAW_val({ rawVal in
 			return Array(rawVal)
 		})

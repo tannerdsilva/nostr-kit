@@ -42,25 +42,24 @@ extension WebSocket {
 		/// request key to be assigned to the `Sec-WebSocket-Key` HTTP header.
 		private let requestKey: String
 		/// largest incoming `WebSocketFrame` size in bytes. This is used to set the `maxFrameSize` on the `WebSocket` channel handler upon a successful upgrade.
-		private let maxFrameSize: Int
+		private let maxWebSocketFrameSize: Int
 		/// if true, adds `WebSocketProtocolErrorHandler` to the channel pipeline to catch and respond to WebSocket protocol errors.
 		private let automaticErrorHandling: Bool
 		/// called once the upgrade was successful or unsuccessful.
 		private let upgradePromise:EventLoopPromise<Void>
 		/// called once the upgrade was successful. This is the owners opportunity to add any needed handlers to the channel pipeline.
-		private let upgradeInitiator: (Channel, HTTPResponseHead) -> EventLoopFuture<Void>
+		private let upgradeInitiator:(Channel, HTTPResponseHead) -> EventLoopFuture<Void>
 
 		/// - parameters:
 		///   - host: sent to the server in the `Host` HTTP header. default value is "localhost".
 		///   - requestKey: sent to the server in the `Sec-WebSocket-Key` HTTP header. Default is random request key.
-		///   - maxFrameSize: largest incoming `WebSocketFrame` size in bytes.
-		///     - default is 16,384 bytes.
+		///   - maxWebSocketFrameSize: largest incoming `WebSocketFrame` size in bytes.
 		///   - automaticErrorHandling: If true, adds `WebSocketProtocolErrorHandler` to the channel pipeline to catch and respond to WebSocket protocol errors. Default is true.
 		///   - upgradePipelineHandler: called once the upgrade was successful
-		internal init(surl:Relay.URL.Split, url:Relay.URL, requestKey:String, maxFrameSize:UInt32 = 1 << 20, automaticErrorHandling: Bool = true, upgradePromise:EventLoopPromise<Void>, upgradeInitiator: @escaping (Channel, HTTPResponseHead) -> EventLoopFuture<Void>) {
+		internal init(surl:Relay.URL.Split, url:Relay.URL, requestKey:String, maxWebSocketFrameSize:Int, automaticErrorHandling: Bool = true, upgradePromise:EventLoopPromise<Void>, upgradeInitiator: @escaping (Channel, HTTPResponseHead) -> EventLoopFuture<Void>) {
 			self.surl = surl
 			self.requestKey = requestKey
-			self.maxFrameSize = Int(maxFrameSize)
+			self.maxWebSocketFrameSize = maxWebSocketFrameSize
 			self.automaticErrorHandling = automaticErrorHandling
 			self.upgradePromise = upgradePromise
 			self.upgradeInitiator = upgradeInitiator
@@ -91,7 +90,10 @@ extension WebSocket {
 		internal func shouldAllowUpgrade(upgradeResponse: HTTPResponseHead) -> Bool {
 			return self._shouldAllowUpgrade(upgradeResponse: upgradeResponse)
 		}
-
+		
+		/// the internal allow upgrade function. the most critical part of this code is how the result of this upgrade is handled.
+		/// - if the upgrade is allowed, the `upgradePromise` is NOT fulfilled in this code.
+		/// - if the upgrade is denied, the `upgradePromise` is filfilled with a FAILURE in this code.
 		private func _shouldAllowUpgrade(upgradeResponse:HTTPResponseHead) -> Bool {
 			// determine a basic path forward based on the HTTP response status code
 			switch upgradeResponse.status {
@@ -138,7 +140,7 @@ extension WebSocket {
 
 		/// called when the upgrade response has been flushed and it is safe to mutate the channel pipeline. Adds channel handlers for websocket frame encoding, decoding and errors.
 		internal func upgrade(context: ChannelHandlerContext, upgradeResponse: HTTPResponseHead) -> EventLoopFuture<Void> {
-			var useHandlers:[NIOCore.ChannelHandler] = [ByteToMessageHandler(WebSocketFrameDecoder(maxFrameSize:self.maxFrameSize))]
+			var useHandlers:[NIOCore.ChannelHandler] = [ByteToMessageHandler(WebSocketFrameDecoder(maxFrameSize:self.maxWebSocketFrameSize))]
 			if self.automaticErrorHandling {
 				useHandlers.append(WebSocketProtocolErrorHandler())
 			}

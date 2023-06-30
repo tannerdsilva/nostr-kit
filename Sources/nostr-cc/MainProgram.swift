@@ -8,6 +8,11 @@ import NIO
 
 @main
 struct CLI:AsyncParsableCommand {
+
+
+	/// the logger for the CLI.
+	static let logger = makeDefaultLogger(label:"cli", logLevel:.debug)
+
 	static let configuration = CommandConfiguration(
 		commandName: "nostr-cc",
 		abstract: "nostr command line client",
@@ -20,7 +25,7 @@ extension CLI {
 		static let configuration = CommandConfiguration(
 			commandName: "relay",
 			abstract: "manage relays",
-			subcommands: [Relay.Connect.self]
+			subcommands: [Relay.Connect.self, Relay.Post.self]
 		)
 
 		struct Connect:ParsableCommand {
@@ -30,7 +35,7 @@ extension CLI {
 			)
 
 			@Argument(help:"the url of the relay to connect to")
-			var url:String = "wss://relay.damus.io"
+			var url:String
 
 			@Option(help:"your nostr key to use for this task")
 			var myKey:String = "nostr-keys"
@@ -39,9 +44,9 @@ extension CLI {
 				let mainEventLoop = MultiThreadedEventLoopGroup(numberOfThreads:1)
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey).json")
 				let readKey = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
-				var buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
+				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
 				let relayConn = try nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).wait()
-				var buildFilter = nostr.Filter(authors:[readKey.pubkey])
+
 				sleep(512)
 				
 				// var config = nostr.Relay.Configuration(authenticationKey:
@@ -49,18 +54,44 @@ extension CLI {
 			}
 		}
 
-		struct MyProfile:ParsableCommand {
+		struct Post:AsyncParsableCommand {
 			static let configuration = CommandConfiguration(
-				commandName: "my-profile",
-				abstract: "query a relay for your profile."
+				commandName: "post",
+				abstract: "post to a relay"
 			)
 
-			@Argument
-			var url:String = "wss://relay.damus.io"
+			@Argument(help:"the url of the relay to connect to")
+			var url:String
 
-			@Option(help:"the name of the key file to use for authentication")
-			var key:String = "nostr-keys"
+			@Argument(help:"your nostr key to use for this task")
+			var myKey:String
+
+			@Argument(help:"the message you would like to post")
+			var myMessage:String
+
+			func run() async throws {
+				let mainEventLoop = MultiThreadedEventLoopGroup(numberOfThreads:1)
+				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey).json")
+				let readKey = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
+				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
+				let relayConn = try nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).wait()
+				
+				var newEvent = nostr.Event()
+				newEvent.created = Date()
+				newEvent.pubkey = readKey.pubkey
+				newEvent.kind = nostr.Event.Kind.text_note
+				newEvent.content = myMessage
+
+				try newEvent.computeUID()
+				try newEvent.sign(readKey.seckey)
+				let prom = try await relayConn.write(.event(.write(newEvent))).get()
+				sleep(512)
+				
+				// var config = nostr.Relay.Configuration(authenticationKey:
+				// let relay = try nostr.Relay.connect(url:try nostr.Relay.URL(url))
+			}
 		}
+
 	}
 }
 
@@ -75,16 +106,17 @@ extension CLI {
 		struct Import:AsyncParsableCommand {
 			static let configuration = CommandConfiguration(
 				commandName: "import",
-				abstract: "import a keypair from input"
+				abstract: "import a keypair from input. the file will be saved in the current directory with a specified output name."
 			)
 
-			@Argument(help:"a bech32-encoded nsec private key to import")
+			@Argument(help:"a bech32-encoded nsec string to import.")
 			var nsec:String
 
 			@Option(help:"the name of the key file to import to the current working directory")
 			var name:String = "nostr-keys"
 
-			func run() async throws {
+			mutating func run() async throws {
+				name.trimExtensionIfExists(".json")
 				let keypair = try nostr.KeyPair(seckey:nostr.Key(nsec:nsec))
 				let encoder = QuickJSON.Encoder()
 				let encoded = try encoder.encode(keypair)
@@ -94,7 +126,7 @@ extension CLI {
 				try fd.close()
 				print(Colors.Green("[OK] Successfully computed keypair from private key."))
 				print(Colors.dim("- - - - - - - - - - - - - - - -"))
-				keypair.printCLIDescription(showSecretKey:true)
+				keypair.printCLIDescription(showSecretKey:true, hex:false)
 				print(Colors.dim("- - - - - - - - - - - - - - - -"))
 				print(Colors.dim("Wrote keypair data to '\(nsec)'"))
 			}
@@ -121,7 +153,7 @@ extension CLI {
 				try fd.close()
 				print(Colors.Green("[OK] Successfully generated keypair."))
 				print(Colors.dim("- - - - - - - - - - - - - - - -"))
-				generateKey.printCLIDescription(showSecretKey:showNSEC)
+				generateKey.printCLIDescription(showSecretKey:showNSEC, hex:false)
 				print(Colors.dim("- - - - - - - - - - - - - - - -"))
 				print(Colors.dim("Wrote keypair data to '\(baseURL.path)'"))
 			}
@@ -136,13 +168,15 @@ extension CLI {
 			@Argument(help:"the name of the key file to read from the current working directory")
 			var name:String
 
+			@Flag var hex:Bool = false
+
 			func run() async throws {
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).json")
 				let keyData = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
 				print(Colors.Green("[OK] Successfully parsed keypair from file."))
 				print(Colors.dim("\(baseURL.path)"))
 				print(Colors.dim("- - - - - - - - - - - - - - - -"))
-				keyData.printCLIDescription(showSecretKey:true)
+				keyData.printCLIDescription(showSecretKey:true, hex:hex)
 				print(Colors.dim("- - - - - - - - - - - - - - - -"))
 			}
 		}
