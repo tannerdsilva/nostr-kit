@@ -19,7 +19,7 @@ extension Relay {
 		case endOfStoredEvents(String)
 
 		/// an acknowledgement of a message.
-		case ok(String)
+		case ok(Event.UID, Bool, String)
 
 		/// an authentication challenge containing a challenge string.
 		/// - see nostr nip-42 for more information.
@@ -148,8 +148,10 @@ extension Relay.Message:Codable {
 					}
 				}
 			case "OK":
-				let proof = try container.decode(String.self)
-				self = .ok(proof)
+				let proof = try container.decode(Event.UID.self)
+				let didSucceed = try container.decode(Bool.self)
+				let message = try container.decode(String.self)
+				self = .ok(proof, didSucceed, message)
 			case "NOTICE":
 				let notice = try container.decode(String.self)
 				self = .notice(notice)

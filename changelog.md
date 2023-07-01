@@ -1,3 +1,11 @@
+## v0.3.1
+
+Mostly a bugfix release, with continued buildout under the hood of future features.
+
+- Beginning to implement higher-level integrations with NIP-20 relay messages.
+
+	- `Relay` now has an event writing function that returns a `Published` struct, which can be used to wait for a publishing events "OK" acknowledgement, per NIP-20.
+
 ## v0.3.0
 
 Improvements to the entire stack.

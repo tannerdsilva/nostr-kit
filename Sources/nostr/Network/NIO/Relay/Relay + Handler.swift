@@ -44,7 +44,7 @@ extension Relay {
 		internal func handlerAdded(context: ChannelHandlerContext) {
 			let recommendedSize = QuickJSON.MemoryPool.maxReadSize(inputSize:self.configuration.limits.maxWebSocketFrameSize, flags:QuickJSON.Decoder.Flags())
 			#if DEBUG
-			self.logger.info("relay connected.", metadata: ["read_size": "\(recommendedSize)b"])
+			self.logger.info("relay connected.", metadata: ["parse_buff_size": "\(recommendedSize) bytes"])
 			#endif
 			self.decoderPointer = malloc(recommendedSize)
 			do {
@@ -144,18 +144,20 @@ extension Relay {
 							context.fireErrorCaught(Error.authenticationAssertionFound)
 							break;
 						}
-					case .ok(let postedString):
+					case let .ok(evUID, didSucceed, message):
 						#if DEBUG
-						self.logger.info("remote peer says 'ok'.", metadata: ["message": "\(postedString.prefix(8))"])
+						self.logger.info("remote peer says 'ok'.", metadata: ["message": "\(message)", "success": "\(didSucceed)", "event_uid": "\(evUID.description.prefix(8))"])
 						#endif
 						break;
 					default:
 					break;
 				}
+				context.fireChannelRead(self.wrapInboundOut(capMessage))
 			} catch let error {
 				#if DEBUG
 				self.logger.error("failed to decode inbound json message.", metadata: ["error": "\(error)"])
 				#endif
+				context.fireErrorCaught(error)
 			}
 		}
 
@@ -175,7 +177,14 @@ extension Relay {
 				#if DEBUG
 				self.logger.error("failed to encode outbound json message.", metadata: ["error": "\(error)"])
 				#endif
+				context.fireErrorCaught(error)
 			}
 		}
+	}
+}
+
+extension Relay.Handler {
+	internal func writeNIP42Assertion(context:ChannelHandlerContext, promise:EventLoopPromise<Void>?) {
+
 	}
 }

@@ -28,21 +28,23 @@ public struct Relay {
 		self.catcher = catcher
 	}
 
-	public func write(_ message:Message) -> EventLoopFuture<Void> {
+	public func write(message:Message) -> EventLoopFuture<Void> {
 		return channel.write(message)
 	}
 
-	public func write(_ event:nostr.Event) -> EventLoopFuture<Void> {
-		let dateProm = self.channel.eventLoop.makePromise(of:Date.self)
-		let publishing = Publishing(relay:self.url, event:event.uid.description, promise:dateProm)
-		let writeFuture = channel.write(nostr.Relay.Message.event(.write(event)))
-		writeFuture.whenSuccess({
-			#if DEBUG
-			Self.logger.info("wrote event to channel.", metadata: ["uid": "\(event.uid.description.prefix(8))"])
-			#endif
-			self.catcher.addPublishingStruct(publishing, forUID:event.uid, channel:self.channel)
+	public func write(event:nostr.Event) -> EventLoopFuture<Publishing> {
+		let pubPromise = channel.eventLoop.makePromise(of:Publishing.self)
+		let publishing = Publishing(relay:self.url, event:event.uid.description, channel:channel)
+		self.catcher.addPublishingStruct(publishing, for:event.uid, channel:self.channel).whenComplete({
+			switch $0 {
+				case .success():
+				let writeFuture = channel.write(nostr.Relay.Message.event(.write(event)))
+				pubPromise.completeWith(writeFuture.map({ publishing }))
+				case .failure(let error):
+				pubPromise.fail(error)
+			}
 		})
-		return writeFuture
+		return pubPromise.futureResult
 	}
 }
 

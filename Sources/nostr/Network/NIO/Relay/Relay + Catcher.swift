@@ -8,13 +8,13 @@ extension Relay {
 		typealias OKHandler = (String, Date) -> Void
 
 		#if DEBUG
-		internal let logger = makeDefaultLogger(label:"nostr-net:relay-catcher", logLevel:.debug)
+		internal let logger = makeDefaultLogger(label:"nostr-net:relay-catcher", logLevel:.info)
 		#endif
 
 	    typealias InboundIn = Message
 
 		/// publishing structs that are currently waiting for an ok response.
-		var activePublishes:[nostr.Event.UID:Publishing] = [:]
+		var activePublishes:[Event.UID:Publishing] = [:]
 
 		internal func handlerAdded(context: ChannelHandlerContext) {
 			#if DEBUG
@@ -29,15 +29,30 @@ extension Relay {
 		}
 
 		internal func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+			let message = self.unwrapInboundIn(data)
+
 			#if DEBUG
-			self.logger.notice("got read info.")
+			self.logger.trace("got read info.")
 			#endif
+
+			switch message {
+				case .ok(let subID, let date, let event):
+					if let publishing = self.activePublishes[subID] {
+						#if DEBUG
+						self.logger.info("got 'ok' publishing event uid: \(subID)")
+						#endif
+						publishing.promise.succeed(Date())
+						self.activePublishes.removeValue(forKey:subID)
+					}
+				default:
+				break;
+			}
 		}
 
-		internal func addPublishingStruct(_ publishing:Publishing, forUID evUID:nostr.Event.UID, channel:Channel) {
-			channel.eventLoop.execute {
+		internal func addPublishingStruct(_ publishing:Publishing, for evUID:Event.UID, channel:Channel) -> EventLoopFuture<Void> {
+			channel.eventLoop.submit {
 				#if DEBUG
-				self.logger.info("adding publishing struct for subscription id: \(evUID)")
+				self.logger.debug("adding publishing struct for event uid: \(evUID)")
 				#endif
 				self.activePublishes[evUID] = publishing
 			}
