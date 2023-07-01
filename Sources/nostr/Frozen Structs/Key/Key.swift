@@ -14,22 +14,7 @@ public typealias PublicKey = Key
 /// a secret key representation of a nostr key struct
 public typealias SecretKey = Key
 
-@frozen
-public struct Key {
-	public enum Error: Swift.Error {
-		/// thrown when decoding using ``Decodable` protocol. specifically thrown when a string value is successfully extraced froma single value container, but the string is not a valid hex-encoded string.
-		case encodedStringInvalid
-
-		/// thrown when trying to initialize a Key from a npub or nsec string.
-		case invalidBech32HRP(String)
-
-		/// thrown when the data returned from the bech32 decoder is longer than the size of the Key struct (32 bytes)
-		case invalidBech32DataLength(size_t)
-
-		/// thrown when the data returned from the bech32 decoder is shorter or longer than the size of the Key struct (32 bytes)
-		case invalidKeyLength(size_t)
-	}
-
+@frozen public struct Key {
 	// 32 byte static buffer
 	internal var bytes: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -117,11 +102,8 @@ extension Key:RAW_comparable {
 	}
 }
 
-/// LosslessStringConvertible conformance 
-/// - based on a hex-encoded representation of the key bytes
-extension Key:LosslessStringConvertible {
-	/// implements a hex-encoded representation of the key bytes
-	public var description:String {
+extension Key:HEX_convertible {
+	public var hexEncodedString:String {
 		get {
 			self.asRAW_val({
 				return Hex.encode($0, lowercaseOutput:true)
@@ -129,24 +111,24 @@ extension Key:LosslessStringConvertible {
 		}
 	}
 
-	/// initialize a key from a hex-encoded representation of the key bytes
-	public init?(_ description:String) {
-		let asBytes:[UInt8]
-		do {
-			asBytes = try Hex.decode(description)
-		} catch {
-			return nil
-		}
+	public init(hexEncodedString: String) throws {
+		let asBytes = try Hex.decode(hexEncodedString)
 		guard asBytes.count == MemoryLayout<Self>.size else {
-			return nil
+			throw Error.invalidKeyLength(asBytes.count)
 		}
 		let makeKey = asBytes.asRAW_val { rv in
-			return Self.init(rv)
+			return Self.init(rv)!
 		}
-		guard makeKey != nil else {
-			return nil
-		}
-		self = makeKey!
+		self = makeKey
+	}
+}
+
+/// LosslessStringConvertible conformance 
+/// - based on a hex-encoded representation of the key bytes
+extension Key:CustomStringConvertible {
+	/// implements a hex-encoded representation of the key bytes
+	public var description:String {
+		return self.hexEncodedString
 	}
 }
 
@@ -155,15 +137,12 @@ extension Key:Codable {
 	public init(from decoder:Decoder) throws {
 		let container = try decoder.singleValueContainer()
 		let asString = try container.decode(String.self)
-		guard let asKey = Self(asString) else {
-			throw Error.encodedStringInvalid
-		}
-		self = asKey
+		self = try Self(hexEncodedString:asString)
 	}
 	// encode implementation
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(self.description)
+		try container.encode(self.hexEncodedString)
 	}
 }
 
@@ -191,5 +170,21 @@ extension Key:Hashable, Equatable, Comparable {
 		self.asRAW_val({ RAWVal in
 			hasher.combine(RAWVal)
 		})
+	}
+}
+
+extension Key {
+	public enum Error: Swift.Error {
+		/// thrown when decoding using ``Decodable` protocol. specifically thrown when a string value is successfully extraced froma single value container, but the string is not a valid hex-encoded string.
+		case encodedStringInvalid
+
+		/// thrown when trying to initialize a Key from a npub or nsec string.
+		case invalidBech32HRP(String)
+
+		/// thrown when the data returned from the bech32 decoder is longer than the size of the Key struct (32 bytes)
+		case invalidBech32DataLength(size_t)
+
+		/// thrown when the data returned from the bech32 decoder is shorter or longer than the size of the Key struct (32 bytes)
+		case invalidKeyLength(size_t)
 	}
 }

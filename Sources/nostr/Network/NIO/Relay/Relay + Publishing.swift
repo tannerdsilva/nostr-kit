@@ -6,7 +6,7 @@ extension Relay {
 	/// - see nostr nip-20 for more details.
 	public struct Publishing {
 		/// represents a failure to publish an event to a relay.
-		struct Falure:Swift.Error {
+		public struct Failure:Swift.Error {
 			public let message:String
 		}
 		

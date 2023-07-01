@@ -19,6 +19,9 @@ extension Relay {
 		case endOfStoredEvents(String)
 
 		/// an acknowledgement of a message.
+		/// - argument 1: the UID of the event that was acknowledged
+		/// - argument 2: whether or not the event was successfully published
+		/// - argument 3: a human readable message
 		case ok(Event.UID, Bool, String)
 
 		/// an authentication challenge containing a challenge string.

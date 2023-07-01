@@ -17,7 +17,7 @@ extension KeyPair {
 }
 
 /// a pairing of public and private keys.
-public struct KeyPair {
+@frozen public struct KeyPair {
 	/// public key of the keypair
 	public let pubkey:PublicKey
 	

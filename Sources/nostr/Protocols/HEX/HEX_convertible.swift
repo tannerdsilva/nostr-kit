@@ -1,0 +1,1 @@
+public typealias HEX_convertible = HEX_encodable & HEX_decodable

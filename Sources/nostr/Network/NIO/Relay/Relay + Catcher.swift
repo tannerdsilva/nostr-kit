@@ -5,8 +5,6 @@ extension Relay {
 
 	/// this caps off the inbound channel pipeline as a means of firing off handlers and events for objects that were not handled upstream.
 	internal final class Catcher:ChannelInboundHandler {
-		typealias OKHandler = (String, Date) -> Void
-
 		#if DEBUG
 		internal let logger = makeDefaultLogger(label:"nostr-net:relay-catcher", logLevel:.info)
 		#endif
@@ -36,13 +34,17 @@ extension Relay {
 			#endif
 
 			switch message {
-				case .ok(let subID, let date, let event):
+				case .ok(let subID, let didSucceed, let message):
 					if let publishing = self.activePublishes[subID] {
-						#if DEBUG
-						self.logger.info("got 'ok' publishing event uid: \(subID)")
-						#endif
-						publishing.promise.succeed(Date())
-						self.activePublishes.removeValue(forKey:subID)
+						switch didSucceed {
+							case true:
+								#if DEBUG
+								self.logger.info("got 'ok' publishing event uid: \(subID)")
+								#endif
+								publishing.promise.succeed(Date())
+							case false:
+								publishing.promise.fail(Publishing.Failure(message:message))
+						}
 					}
 				default:
 				break;

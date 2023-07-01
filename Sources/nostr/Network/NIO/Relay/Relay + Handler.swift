@@ -101,46 +101,14 @@ extension Relay {
 							self.logger.info("received nip-42 auth callenge.", metadata: ["challenge": "\(chalStr)"])
 							#endif
 
-							// build the new event that will respond to the authentication challenge
-							var authEvent = nostr.Event()
-							authEvent.kind = .auth_response
-							authEvent.created = Date()
-							authEvent.tags = [
-								nostr.Event.Tag(["relay", "\(self.url)"]),
-								nostr.Event.Tag(["challenge", "\(chalStr)"]),
-							]
-							authEvent.pubkey = self.configuration.authenticationKey!.pubkey
-							try authEvent.computeUID()
-							try authEvent.sign(self.configuration.authenticationKey!.seckey)
-
-							// encode and send the response
-							let encMessage = try encoder!.encode(nostr.Relay.Message.authentication(.assertion(authEvent)))
-
-							// write the message to the buffer
-							var writeBuffer = context.channel.allocator.buffer(capacity:encMessage.count)
-							encMessage.asRAW_val({ rawVal in
-								_ = writeBuffer.writeBytes(UnsafeRawBufferPointer(start:rawVal.mv_data, count:rawVal.mv_size))
-							})
-
-							#if DEBUG
-							let writePromise = context.eventLoop.makePromise(of:Void.self)
-							context.writeAndFlush(self.wrapOutboundOut(writeBuffer), promise:writePromise)
-							writePromise.futureResult.whenComplete { result in
-								switch result {
-									case .success(_):
-										self.logger.info("sent nip-42 auth assertion.", metadata: ["response_uid":"\(authEvent.uid.description.prefix(8))"])
-									case .failure(let error):
-										self.logger.error("failed to send nip-42 auth assertion.", metadata: ["response_uid": "\(authEvent.uid.description.prefix(8))", "error": "\(error)"])
-								}
-							}
-							#else
-							context.writeAndFlush(self.wrapOutboundOut(writeBuffer), promise:nil)
-							#endif
+							self.writeNIP42Assertion(challenge:chalStr, context:context, promise:nil)
 
 							case .assertion(_):
+							
 							#if DEBUG
 							self.logger.error("authentication assertion received in client context.")
 							#endif
+							
 							context.fireErrorCaught(Error.authenticationAssertionFound)
 							break;
 						}
@@ -184,7 +152,44 @@ extension Relay {
 }
 
 extension Relay.Handler {
-	internal func writeNIP42Assertion(context:ChannelHandlerContext, promise:EventLoopPromise<Void>?) {
+	/// writes a NIP42 assertion to the remote peer.
+	/// - NOTE: this function assumes that there is ALWAYS a valid authentication key in the configuration, and will crash if there is not.
+	internal func writeNIP42Assertion(challenge:String, context:ChannelHandlerContext, promise:EventLoopPromise<Void>?) {
+		do {
+			// generate a new event
+			let authEvent = try nostr.Event.nip42Assertion(to:challenge, from:self.url, using: self.configuration.authenticationKey!)
+		
+			// encode and send the response
+			let encMessage = try encoder!.encode(nostr.Relay.Message.authentication(.assertion(authEvent)))
 
+			// write the message to the buffer
+			var writeBuffer = context.channel.allocator.buffer(capacity:encMessage.count)
+			encMessage.asRAW_val({ rawVal in
+				_ = writeBuffer.writeBytes(UnsafeRawBufferPointer(start:rawVal.mv_data, count:rawVal.mv_size))
+			})
+
+			// send the buffer into the channel
+			#if DEBUG
+			let writePromise = context.eventLoop.makePromise(of:Void.self)
+			context.writeAndFlush(self.wrapOutboundOut(writeBuffer), promise:writePromise)
+			writePromise.futureResult.whenComplete { result in
+				switch result {
+					case .success(_):
+						self.logger.info("sent nip-42 auth assertion.", metadata: ["response_uid":"\(authEvent.uid.description.prefix(8))"])
+					case .failure(let error):
+						self.logger.error("failed to send nip-42 auth assertion.", metadata: ["response_uid": "\(authEvent.uid.description.prefix(8))", "error": "\(error)"])
+				}
+			}
+			if promise != nil {
+				writePromise.futureResult.cascade(to:promise!)
+			}
+			#else
+			context.writeAndFlush(self.wrapOutboundOut(writeBuffer), promise:promise)
+			#endif
+
+		
+		} catch let error {
+			context.fireErrorCaught(error)
+		}
 	}
 }

@@ -1,3 +1,25 @@
+## v0.3.2
+
+- New public protocols that allow types to explicitly handle their translations to and from HEX encodings.
+
+	- `HEX_convertible` is an alias for both encoding and decoding protocols.
+
+		- `HEX_encodable` for translating to a hex-encoded string
+
+		- `HEX_decodable` for translating from a hex-encoded string
+
+- Changes to `@frozen` structs
+
+	- Additional structs marked as `@frozen`.
+
+		- `nostr.Event.UID` - should always be 32 bytes.
+
+		- `nostr.KeyPair` - should always be 64 bytes (2x 32 byte keys).
+
+	- Frozen structs in the `nostr` library have been moved to a dedicated directory path for better management of their inherit development risks.
+
+- Related to NIP20: `Published` struct now correctly signals failures, as it does successful events.
+
 ## v0.3.1
 
 Mostly a bugfix release, with continued buildout under the hood of future features.
