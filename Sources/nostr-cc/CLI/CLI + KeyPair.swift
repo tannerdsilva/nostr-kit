@@ -26,10 +26,11 @@ extension CLI {
 			var name:String = "nostr-keys.nkey"
 
 			mutating func run() async throws {
+				self.name.trimExtensionIfExists(".nkey")
 				let keypair = try nostr.KeyPair(seckey:nostr.Key(nsec:nsec))
 				let encoder = QuickJSON.Encoder()
 				let encoded = try encoder.encode(keypair)
-				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name)")
+				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).nkey")
 				let fd = try FileDescriptor.open(baseURL.path, .writeOnly, options:[.create, .truncate], permissions:[.ownerReadWrite])
 				try fd.writeAll(encoded)
 				try fd.close()
@@ -52,11 +53,12 @@ extension CLI {
 
 			@Flag var showNSEC:Bool = false
 
-			func run() async throws {
+			mutating func run() async throws {
+				self.name.trimExtensionIfExists(".nkey")
 				let generateKey = try nostr.KeyPair.generateNew()
 				let encoder = QuickJSON.Encoder()
 				let encoded = try encoder.encode(generateKey)
-				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name)")
+				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).nkey")
 				let fd = try FileDescriptor.open(baseURL.path, .writeOnly, options:[.create, .truncate], permissions:[.ownerReadWrite])
 				try fd.writeAll(encoded)
 				try fd.close()
@@ -71,7 +73,7 @@ extension CLI {
 		struct Info:AsyncParsableCommand {
 			static let configuration = CommandConfiguration(
 				commandName: "info",
-				abstract: "get info about a keypair json file"
+				abstract: "get info about a keypair file"
 			)
 
 			@Argument(help:"the name of the key file to read from the current working directory")
@@ -79,8 +81,9 @@ extension CLI {
 
 			@Flag var hex:Bool = false
 
-			func run() async throws {
-				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name)")
+			mutating func run() async throws {
+				self.name.trimExtensionIfExists(".nkey")
+				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).nkey")
 				let keyData = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
 				print(Colors.Green("[OK] Successfully parsed keypair from file."))
 				print(Colors.dim("\(baseURL.path)"))

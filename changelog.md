@@ -1,12 +1,18 @@
+## v0.3.3
+
+- A minor release related to the `nostr-cc`.
+
+	- More rigid/systematic handling of keypair extensions, increasing the likleyhood of keypairs remaining within the scope of `.gitignore`.
+
 ## v0.3.2
 
 - New public protocols that allow types to explicitly handle their translations to and from HEX encodings.
 
 	- `HEX_convertible` is an alias for both encoding and decoding protocols.
 
-		- `HEX_encodable` for translating to a hex-encoded string
+		- `HEX_encodable` for translating to a hex-encoded string.
 
-		- `HEX_decodable` for translating from a hex-encoded string
+		- `HEX_decodable` for translating from a hex-encoded string.
 
 - Changes to `@frozen` structs
 
@@ -42,7 +48,7 @@ Improvements to the entire stack.
 
 - Date improved (no longer able to be influenced by local timezones).
 
-	- Unit test tweaked
+	- Unit test tweaked.
 	
 - Beginning to build out the mechanisms and tools needed around the `Relay.Handler` in order to facilitate more convenient uses in the future.
 
@@ -58,11 +64,11 @@ Major buildout of the entire stack. Deep and wide-ranging improvements to every 
 
 - Added more tests.
 
-	- nostr event UID test
+	- nostr event UID test.
 
-	- nostr event signature test
+	- nostr event signature test.
 
-	- nostr key initialize from secret key test (verifies the resulting public key)
+	- nostr key initialize from secret key test (verifies the resulting public key).
 
 ## v0.1.0
 

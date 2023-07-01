@@ -24,9 +24,10 @@ extension CLI {
 			@Argument(help:"your nostr key to use for this task.")
 			var myKey:String = "nostr-keys.nkey"
 
-			func run() throws {
+			mutating func run() throws {
+				myKey.trimExtensionIfExists(".nkey")
 				let mainEventLoop = MultiThreadedEventLoopGroup(numberOfThreads:1)
-				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey)")
+				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey).nkey")
 				let readKey = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
 				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
 				let relayConn = try nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).wait()
@@ -54,9 +55,10 @@ extension CLI {
 			@Argument(help:"the file name to use for your key.")
 			var myKey:String = "nostr-keys.nkey"
 
-			func run() async throws {
+			mutating func run() async throws {
+				self.myKey.trimExtensionIfExists(".nkey")
 				let mainEventLoop = MultiThreadedEventLoopGroup(numberOfThreads:1)
-				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey)")
+				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey).nkey")
 				let readKey = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
 				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
 				let relayConn = try await nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).get()
