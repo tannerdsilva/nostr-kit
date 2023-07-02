@@ -14,7 +14,7 @@ extension Relay {
 		private let holdPeriod:TimeAmount
 
 		/// consumers of various active subscriptions.
-		private var subHandlers:[String:Relay.Subscription] = [:]
+		private var subHandlers:[String:nostr.Consumer] = [:]
 
 		/// main initializer. 
 		/// - parameters:
