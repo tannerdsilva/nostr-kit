@@ -49,25 +49,28 @@ extension Event.UID:RAW_comparable {
 	}
 }
 
-/// LosslessStringConvertible conformance
-extension Event.UID:LosslessStringConvertible {
-	public init?(_ description: String) {
-		do {
-			let decoded = try Hex.decode(description)
-			guard let makeSelf = decoded.asRAW_val({ bytesVal in
-				return Self.init(bytesVal)
-			}) else {
-				return nil
-			}
-			self = makeSelf
-		} catch {
-			return nil
+extension Event.UID:HEX_convertible {
+	public init(hexEncodedString: String) throws {
+		let decoded = try Hex.decode(hexEncodedString)
+		guard decoded.count == MemoryLayout<Self>.size else {
+			throw Error.encodedStringInvalid
 		}
+		let makeSelf = decoded.asRAW_val({ bytesVal in
+			return Self.init(bytesVal)!
+		})
+		self = makeSelf
 	}
-	public var description: String {
+	public var hexEncodedString: String {
 		self.asRAW_val { rval in
 			return Hex.encode(rval, lowercaseOutput:true)
 		}
+	}
+}
+
+/// LosslessStringConvertible conformance
+extension Event.UID:CustomStringConvertible {
+	public var description: String {
+		return self.hexEncodedString
 	}
 }
 
@@ -109,5 +112,12 @@ extension Event.UID:Equatable, Hashable, Comparable {
 		asRAW_val({ hashVal in
 			hasher.combine(hashVal)
 		})
+	}
+}
+
+extension Event.UID {
+	public enum Error: Swift.Error {
+		/// thrown when decoding using ``Decodable` protocol. specifically thrown when a string value is successfully extraced froma single value container, but the string could not be handled.
+		case encodedStringInvalid
 	}
 }

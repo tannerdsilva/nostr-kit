@@ -1,3 +1,7 @@
+## v0.4.0
+
+- Major changes in how Event tags are structured.
+
 ## v0.3.3
 
 - A minor release related to the `nostr-cc`.

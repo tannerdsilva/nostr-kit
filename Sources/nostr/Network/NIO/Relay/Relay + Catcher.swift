@@ -19,7 +19,7 @@ extension Relay {
 		/// main initializer. 
 		/// - parameters:
 		/// 	- holdPeriod: the amount of time subscription events are held before being dispatched downstream as a group
-		init(holdPeriod:TimeAmount = .milliseconds(250)) {
+		init(holdPeriod:TimeAmount = .milliseconds(200)) {
 			self.holdPeriod = holdPeriod
 		}
 

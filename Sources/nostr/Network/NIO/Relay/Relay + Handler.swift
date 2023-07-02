@@ -108,7 +108,7 @@ extension Relay {
 							}
 
 							#if DEBUG
-							self.logger.info("received nip-42 auth callenge.", metadata: ["challenge": "\(chalStr)"])
+							self.logger.info("received nip-42 auth challenge.", metadata: ["challenge": "\(chalStr)"])
 							#endif
 
 							self.writeNIP42Assertion(challenge:chalStr, context:context, promise:nil)

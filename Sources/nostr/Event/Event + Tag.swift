@@ -11,6 +11,10 @@ extension Event {
 	}
 }
 
+extension Event.Tag {
+	
+}
+
 // event tag - additional implementations
 extension Event.Tag {
 	public static func fromPublicKey(_ pubkey:PublicKey) throws -> Event.Tag {
