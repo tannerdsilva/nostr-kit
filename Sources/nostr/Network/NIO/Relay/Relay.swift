@@ -28,14 +28,10 @@ public struct Relay {
 		self.catcher = catcher
 	}
 
-	public func write(message:Message) -> EventLoopFuture<Void> {
-		return channel.write(message)
-	}
-
 	public func write(event:nostr.Event) -> EventLoopFuture<Publishing> {
 		let pubPromise = channel.eventLoop.makePromise(of:Publishing.self)
 		let publishing = Publishing(relay:self.url, event:event.uid.description, channel:channel)
-		self.catcher.addPublishingStruct(publishing, for:event.uid, channel:self.channel).whenComplete({
+		self.handler.addPublishingStruct(publishing, for:event.uid, channel:self.channel).whenComplete({
 			switch $0 {
 				case .success():
 				let writeFuture = channel.write(nostr.Relay.Message.event(.write(event)))
@@ -46,6 +42,7 @@ public struct Relay {
 		})
 		return pubPromise.futureResult
 	}
+
 }
 
 extension Relay {

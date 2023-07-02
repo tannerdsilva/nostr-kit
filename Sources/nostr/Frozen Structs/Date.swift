@@ -32,8 +32,7 @@ fileprivate func encodingReferenceDate() -> time_t {
 }
 internal let encDate = encodingReferenceDate()
 
-@frozen 
-public struct Date {
+@frozen public struct Date {
 	/// the primitive value of this instance.
 	/// represents the seconds elapsed since 00:00:00 UTC on 1 January 2001
 	private let rawVal:Double
@@ -56,11 +55,12 @@ public struct Date {
 		self.rawVal = difftime(makeTime, refDate) - offset
 	}
 
+	/// initialize with a unix epoch interval (seconds since 00:00:00 UTC on 1 January 1970)
 	public init(unixInterval:Double) {
 		rawVal = unixInterval - 978307200
 	}
 
-	/// basic initializer based on the primitive
+	/// basic initializer based on the primitive (seconds since 00:00:00 UTC on 1 January 2001)
 	public init(referenceDate:Double) {
 		self.rawVal = referenceDate
 	}

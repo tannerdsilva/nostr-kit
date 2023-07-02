@@ -2,8 +2,6 @@ import NIO
 
 
 extension Relay {
-
-	/// this caps off the inbound channel pipeline as a means of firing off handlers and events for objects that were not handled upstream.
 	internal final class Catcher:ChannelInboundHandler {
 		#if DEBUG
 		internal let logger = makeDefaultLogger(label:"nostr-net:relay-catcher", logLevel:.info)
@@ -11,8 +9,26 @@ extension Relay {
 
 	    typealias InboundIn = Message
 
-		/// publishing structs that are currently waiting for an ok response.
-		var activePublishes:[Event.UID:Publishing] = [:]
+		// the task that is used to flush the channel.
+		private var flushTask:Scheduled<Void>? = nil
+		private let holdPeriod:TimeAmount
+
+		/// consumers of various active subscriptions.
+		private var subHandlers:[String:Relay.Subscription] = [:]
+
+		/// main initializer. 
+		/// - parameters:
+		/// 	- holdPeriod: the amount of time subscription events are held before being dispatched downstream as a group
+		init(holdPeriod:TimeAmount = .milliseconds(250)) {
+			self.holdPeriod = holdPeriod
+		}
+
+		/// schedules a task to flush the events
+		private func scheduleFlushTask(channel:Channel) {
+			self.flushTask = channel.eventLoop.scheduleTask(in:self.holdPeriod, {
+				self.flushTask = nil
+			})
+		}
 
 		internal func handlerAdded(context: ChannelHandlerContext) {
 			#if DEBUG
@@ -34,29 +50,19 @@ extension Relay {
 			#endif
 
 			switch message {
-				case .ok(let subID, let didSucceed, let message):
-					if let publishing = self.activePublishes[subID] {
-						switch didSucceed {
-							case true:
-								#if DEBUG
-								self.logger.info("got 'ok' publishing event uid: \(subID)")
-								#endif
-								publishing.promise.succeed(Date())
-							case false:
-								publishing.promise.fail(Publishing.Failure(message:message))
-						}
+				case .event(let context):
+					switch context {
+						case .sub(let subID, let event):
+							#if DEBUG
+							self.logger.trace("got write event.")
+							#endif
+							
+							// fire channel read would happen here if there were more elements in the pipeline
+						default:
+							break;
 					}
 				default:
-				break;
-			}
-		}
-
-		internal func addPublishingStruct(_ publishing:Publishing, for evUID:Event.UID, channel:Channel) -> EventLoopFuture<Void> {
-			channel.eventLoop.submit {
-				#if DEBUG
-				self.logger.debug("adding publishing struct for event uid: \(evUID)")
-				#endif
-				self.activePublishes[evUID] = publishing
+					break;
 			}
 		}
 	}
