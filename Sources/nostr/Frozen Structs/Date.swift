@@ -61,8 +61,8 @@ internal let encDate = encodingReferenceDate()
 	}
 
 	/// basic initializer based on the primitive (seconds since 00:00:00 UTC on 1 January 2001)
-	public init(referenceDate:Double) {
-		self.rawVal = referenceDate
+	public init(referenceInterval:Double) {
+		self.rawVal = referenceInterval
 	}
 
 	/// returns the difference in time between the called instance and passed date

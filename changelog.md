@@ -6,8 +6,9 @@
 
 		- `NOSTR_TagName_expl` and `NOSTR_TagName_impl` protocol define how Swift Types may represent themselves as string-like "tag names" (`#p`, `relay`, `challenge`, etc).
 
-		- `NOSTR_Tag_expl` and `NOSTR_Tag_impl` protocols define how Swift Types may represent themselves as complete nostr tag entries. (`["relay":"wss://relay.damus.io"]`, for example)
+		- `NOSTR_Tag_expl` and `NOSTR_Tag_impl` protocols define how Swift Types may represent themselves as complete nostr tag entries. (`["relay":"wss://relay.damus.io"]`, for example).
 
+- Renamed a func or two in `struct Date` for better consistency with other functions in the struct.
 
 ## v0.3.3
 
