@@ -7,7 +7,8 @@ extension Relay {
 		internal let logger = makeDefaultLogger(label:"nostr-net:relay-catcher", logLevel:.info)
 		#endif
 
-	    typealias InboundIn = Message
+	    internal typealias InboundIn = Message
+		internal typealias OutboundOut = Message
 
 		// the task that is used to flush the channel.
 		private var flushTask:Scheduled<Void>? = nil

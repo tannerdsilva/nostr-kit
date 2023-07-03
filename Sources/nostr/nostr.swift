@@ -11,3 +11,7 @@ internal func makeDefaultLogger(label:String, logLevel:Logger.Level) -> Logger {
 	newLogger.logLevel = logLevel
 	return newLogger
 }
+
+#if DEBUG
+internal let logger = makeDefaultLogger(label:"nostr", logLevel:.info)
+#endif

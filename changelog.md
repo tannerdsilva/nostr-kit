@@ -1,6 +1,13 @@
 ## v0.4.0
 
-- Major changes in how Event tags are structured.
+- Major changes in how Event tags are structured and expressed in the API.
+
+	- Introduction of new open-ended Tag protocols.
+
+		- `NOSTR_TagName_expl` and `NOSTR_TagName_impl` protocol define how Swift Types may represent themselves as string-like "tag names" (`#p`, `relay`, `challenge`, etc).
+
+		- `NOSTR_Tag_expl` and `NOSTR_Tag_impl` protocols define how Swift Types may represent themselves as complete nostr tag entries. (`["relay":"wss://relay.damus.io"]`, for example)
+
 
 ## v0.3.3
 

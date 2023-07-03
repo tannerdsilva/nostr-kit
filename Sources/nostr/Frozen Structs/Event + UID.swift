@@ -79,14 +79,12 @@ extension Event.UID:Codable {
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.singleValueContainer()
 		let description = try container.decode(String.self)
-		guard let makeSelf = Self.init(description) else {
-			throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid UID")
-		}
+		let makeSelf = try Self.init(hexEncodedString:description)
 		self = makeSelf
 	}
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(self.description)
+		try container.encode(self.hexEncodedString)
 	}
 }
 

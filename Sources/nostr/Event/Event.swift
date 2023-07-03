@@ -12,7 +12,7 @@ public struct Event {
 	/// the cryptographic signature for the event
 	public var sig:String = ""
 	/// the tags attached to the event
-	public var tags = [Tag]()
+	public var tags = Tags()
 	/// the author of the event
 	public var pubkey = PublicKey()
 	/// the creation date of the event

@@ -15,9 +15,6 @@ public struct Filter {
 	/// returned events must be authored by one of these public keys
 	public var authors:Set<nostr.Key>?
 
-	/// any dynamic tags that need to be encoded into the filter
-	public var dynamicTags = [DYTAG_encodable]()
-	
 	/// create a new filter
 	public init(
 		ids:Set<String>? = nil,

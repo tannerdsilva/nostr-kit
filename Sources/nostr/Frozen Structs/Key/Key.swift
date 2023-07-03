@@ -132,12 +132,6 @@ extension Key:CustomStringConvertible {
 	}
 }
 
-extension Key:DYTAG_encodable {
-	public var dytag_nameVals:[Character:[String]] {
-		return ["p": [self.hexEncodedString]]
-	}
-}
-
 extension Key:Codable {
 	// decode implementation
 	public init(from decoder:Decoder) throws {
