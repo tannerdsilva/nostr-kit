@@ -4,92 +4,25 @@ import Glibc
 import Darwin.C
 #endif
 
-public typealias NOSTR_Tag_impl = NOSTR_Tag_expl & Codable & Collection & ExpressibleByArrayLiteral
+public protocol NOSTR_tag:ExpressibleByArrayLiteral, Collection where Element == any LosslessStringConvertible {
+	associatedtype NOSTR_TYPE_tag_name:NOSTR_tag_name
+	associatedtype NOSTR_TYPE_tag_info:Collection where NOSTR_TYPE_tag_info.Element == any NOSTR_tag_info_field
 
-/// an unkeyed container of stringlike objects, whose contents represent a concept in nostr known as "tags".
-/// - the first element of the array is the tag name, and the rest are additional info.
-public protocol NOSTR_Tag_expl:Codable, ExpressibleByArrayLiteral, Collection where Element == NOSTR_Tag_Primitive_Type {
-	/// if a nostr tag is represented as an unkeyed container of stringlike objects, this is the primitive type that defines the boundaries around the "stringlike-ness"
-	associatedtype NOSTR_Tag_Primitive_Type = any LosslessStringConvertible
+	/// represents the nostr tag name as a string representation.
+	var NOSTR_tag_name:NOSTR_TYPE_tag_name { get }
 
-	/// the type of name for the tag. this distinguishes the type of content it contains.
-	associatedtype NOSTR_TagName_Type:NOSTR_TagName_expl
+	var NOSTR_tag_info:NOSTR_TYPE_tag_info { get }
 
-	/// the type of content the tag contains.
-	/// - must be some string-like codable type
-	associatedtype NOSTR_TagInfo_Type:Collection where NOSTR_TagInfo_Type.Element == any NOSTR_TagInfoField_expl 
-
-	/// the tag name (signifies the type of data it contains)
-	static var NOSTR_TagName:NOSTR_TagName_Type { get }
-
-	/// additional info associated with the tag
-	var NOSTR_TagInfo:NOSTR_TagInfo_Type { get }
-
-	/// initialize from a tag name and tag info
-	init(NOSTR_TagName:NOSTR_TagName_Type, NOSTR_TagInfo:NOSTR_TagInfo_Type)
+	/// initialize from a string representation of the nostr tag name.
+	init(NOSTR_tag_name:NOSTR_TYPE_tag_name, NOSTR_tag_info:NOSTR_TYPE_tag_info)
 }
 
-// collection conformance.
-// for this protocol, we are implementing a collection of lossless string convertibles.
-extension Collection where Self:NOSTR_Tag_impl {
-	public typealias Index = size_t
-	public var startIndex:size_t {
-		return 0
-	}
-	public var endIndex:size_t {
-		return self.count + 1
-	}
-	public func index(after i:size_t) -> size_t {
-		return i + 1
-	}
-	public func index(before i:size_t) -> size_t {
-		return i - 1
-	}
-	public subscript(position:size_t) -> String {
-		switch position {
-			case 0:
-				return self.NOSTR_TagName.NOSTR_TagName
-			default:
-				return self.NOSTR_TagInfo[position - 1]
-		}
+extension NOSTR_tag where NOSTR_TYPE_tag_name:LosslessStringConvertible, NOSTR_TYPE_tag_info:Collection, NOSTR_TYPE_tag_info.Element == any NOSTR_tag_info_field {
+	/// implement expressible by array literal.
+	public init(arrayLiteral elements:Element...) {
+		let getElement = elements[0]
+		let makeName = NOSTR_TYPE_tag_name(NOSTR_tag_name:elements[0])
+		self.init(NOSTR_tag_name:NOSTR_TYPE_tag_name(NOSTR_tag_name:elements[0].description), NOSTR_tag_info:elements[1...])
 	}
 }
-
-// event tag - decodable
-extension Decodable where Self:NOSTR_Tag_impl {
-	// decode implementation
-	public init(from decoder:Decoder) throws {
-		var container = try decoder.unkeyedContainer()
-		let tagName = try container.decode(NOSTR_TagName_Type.self)
-		var buildArray = [NOSTR_TagInfo_Type]()
-		while container.isAtEnd == false {
-			buildArray.append(try container.decode(NOSTR_TagInfo_Type.self))
-		}
-		self.init(NOSTR_TagName:tagName, NOSTR_TagInfo:buildArray)
-	}
-}
-
-// event tag - encodable
-extension Encodable where Self:NOSTR_Tag_impl {
-	// encode implementation
-	public func encode(to encoder:Encoder) throws {
-		var nameContainer = encoder.unkeyedContainer()
-		try nameContainer.encode(self.tagName)
-		for curInfo in self.tagInfo {
-			try nameContainer.encode(curInfo)
-		}
-	}
-}
-
-extension ExpressibleByArrayLiteral where Self:NOSTR_Tag_impl {
-	// array literal implementation
-	public init(arrayLiteral elements: String...) {
-		precondition(elements.count > 0, "cannot initialize with empty array literal")
-		let tagName = try! NOSTR_TagName_Type(NOSTR_TagName:elements[0])
-		var buildArray = [NOSTR_TagInfo_Type]()
-		for curInfo in elements[1...] {
-			buildArray.append(NOSTR_TagInfo_Type(curInfo)!)
-		}
-		self.init(NOSTR_TagName:tagName, NOSTR_TagInfo:buildArray)
-	}
-}
+let myTag:NOSTR_tag = ["#a", "b", "c"]
