@@ -72,7 +72,7 @@ internal let encDate = encodingReferenceDate()
 
 	/// returns a new value that is the sum of the current value and the passed interval
 	public func addingTimeInterval(_ interval:Double) -> Self {
-		return Self(referenceDate:self.rawVal + interval)
+		return Self(referenceInterval:self.rawVal + interval)
 	}
 
 	/// returns the time interval since the reference date
