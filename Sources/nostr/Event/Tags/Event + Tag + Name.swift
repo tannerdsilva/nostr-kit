@@ -10,9 +10,9 @@ extension Event.Tag {
 	}
 }
 
-extension Event.Tag.Name:NOSTR_TagName_impl {
+extension Event.Tag.Name:NOSTR_Proto_TagName {
 	/// this is the "primary truth" initializer for this type.
-	public init(NOSTR_TagName value:String) throws {
+	public init(NOSTR_Proto_TagName value:String) throws {
 		if value.count == 2 && value.first! == "#" && value.last!.isLetter == true {
 			self = .dynamic(value.last!)
 		} else {
@@ -22,7 +22,7 @@ extension Event.Tag.Name:NOSTR_TagName_impl {
 			self = .name(value)
 		}
 	}
-	public var NOSTR_TagName:String {
+	public var NOSTR_Proto_TagName:String {
 		switch self {
 			case .dynamic(let char):
 				return "#\(char)"

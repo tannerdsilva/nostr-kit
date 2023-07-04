@@ -8,23 +8,25 @@ public typealias NOSTR_Tag_impl = NOSTR_Tag_expl & Codable & Collection & Expres
 
 /// an unkeyed container of stringlike objects, whose contents represent a concept in nostr known as "tags".
 /// - the first element of the array is the tag name, and the rest are additional info.
-public protocol NOSTR_Tag_expl:Codable, ExpressibleByArrayLiteral, Collection where Element == String {
-	
+public protocol NOSTR_Tag_expl:Codable, ExpressibleByArrayLiteral, Collection where Element == NOSTR_Tag_Primitive_Type {
+	/// if a nostr tag is represented as an unkeyed container of stringlike objects, this is the primitive type that defines the boundaries around the "stringlike-ness"
+	associatedtype NOSTR_Tag_Primitive_Type = any LosslessStringConvertible
+
 	/// the type of name for the tag. this distinguishes the type of content it contains.
 	associatedtype NOSTR_TagName_Type:NOSTR_TagName_expl
 
 	/// the type of content the tag contains.
 	/// - must be some string-like codable type
-	associatedtype NOSTR_TagInfo_Type:LosslessStringConvertible & Codable 
+	associatedtype NOSTR_TagInfo_Type:Collection where NOSTR_TagInfo_Type.Element == any NOSTR_TagInfoField_expl 
 
 	/// the tag name (signifies the type of data it contains)
-	var NOSTR_TagName:NOSTR_TagName_Type { get }
+	static var NOSTR_TagName:NOSTR_TagName_Type { get }
 
 	/// additional info associated with the tag
-	var NOSTR_TagInfo:[NOSTR_TagInfo_Type] { get }
+	var NOSTR_TagInfo:NOSTR_TagInfo_Type { get }
 
 	/// initialize from a tag name and tag info
-	init(NOSTR_TagName:NOSTR_TagName_Type, NOSTR_TagInfo:[NOSTR_TagInfo_Type])
+	init(NOSTR_TagName:NOSTR_TagName_Type, NOSTR_TagInfo:NOSTR_TagInfo_Type)
 }
 
 // collection conformance.
@@ -46,9 +48,9 @@ extension Collection where Self:NOSTR_Tag_impl {
 	public subscript(position:size_t) -> String {
 		switch position {
 			case 0:
-				return self.NOSTR_TagName.description
+				return self.NOSTR_TagName.NOSTR_TagName
 			default:
-				return self.NOSTR_TagInfo[position - 1].description
+				return self.NOSTR_TagInfo[position - 1]
 		}
 	}
 }
@@ -72,8 +74,8 @@ extension Encodable where Self:NOSTR_Tag_impl {
 	// encode implementation
 	public func encode(to encoder:Encoder) throws {
 		var nameContainer = encoder.unkeyedContainer()
-		try nameContainer.encode(self.NOSTR_TagName)
-		for curInfo in self.NOSTR_TagInfo {
+		try nameContainer.encode(self.tagName)
+		for curInfo in self.tagInfo {
 			try nameContainer.encode(curInfo)
 		}
 	}

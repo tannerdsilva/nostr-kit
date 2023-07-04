@@ -21,14 +21,14 @@ extension Event {
 	/// - note: tags cannot be empty, and must have a name of at least one character.
 	public struct Tag:NOSTR_Tag_impl {
 		/// the type of tag.
-		public let NOSTR_TagName:Name
+		public let name:Name
 		/// additional info associated with the tag
-		public let NOSTR_TagInfo:[String]
+		public let info:[String]
 
 		/// initialize from a tag name and tag info
 		public init(NOSTR_TagName:Name, NOSTR_TagInfo:[String]) {
-			self.NOSTR_TagName = NOSTR_TagName
-			self.NOSTR_TagInfo = NOSTR_TagInfo
+			self.name = NOSTR_TagName
+			self.info = NOSTR_TagInfo
 		}
 	}
 }
