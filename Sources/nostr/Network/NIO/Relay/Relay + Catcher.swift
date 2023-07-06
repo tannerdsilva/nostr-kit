@@ -15,9 +15,9 @@ extension Relay {
 		private let holdPeriod:TimeAmount
 
 		/// consumers of various active subscriptions.
-		private var subHandlers:[String:nostr.Consumer] = [:]
+		// private var subHandlers:[String:nostr.Consumer] = [:]
 
-		/// main initializer. 
+		/// main initializer.
 		/// - parameters:
 		/// 	- holdPeriod: the amount of time subscription events are held before being dispatched downstream as a group
 		init(holdPeriod:TimeAmount = .milliseconds(200)) {

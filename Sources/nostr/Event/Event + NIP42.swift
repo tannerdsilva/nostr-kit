@@ -4,8 +4,8 @@ extension Event {
 		authEvent.kind = .auth_response
 		authEvent.created = Date()
 		authEvent.tags = [
-			["relay", relay.description],
-			["challenge", challenge],
+			["challenge", "\(challenge)"],
+			["relay", "\(relay.description)"],
 		]
 		authEvent.pubkey = keypair.pubkey
 		try authEvent.computeUID()

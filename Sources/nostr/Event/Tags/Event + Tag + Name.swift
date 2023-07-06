@@ -3,18 +3,19 @@ extension Event.Tag {
 	/// for more info as to why this is necessary, see the NIP-12 proposal.
 	public enum Name {
 		/// represents a # (dynamic) tag of a specific character
-		case dynamic(Character)
+		case generic(Character)
 
 		/// represents a named tag of a non-distinct type
 		case name(String)
 	}
 }
 
-extension Event.Tag.Name:NOSTR_TagName_impl {
+extension Event.Tag.Name:NOSTR_tag_namefield {
+    public typealias NOSTR_tag_namefield_ERROR_zerolength = ZeroLengthError
 	/// this is the "primary truth" initializer for this type.
-	public init(NOSTR_TagName value:String) throws {
+	public init(NOSTR_tag_namefield value:String) throws {
 		if value.count == 2 && value.first! == "#" && value.last!.isLetter == true {
-			self = .dynamic(value.last!)
+			self = .generic(value.lowercased().last!)
 		} else {
 			guard value.count > 0 else {
 				throw ZeroLengthError()
@@ -22,9 +23,9 @@ extension Event.Tag.Name:NOSTR_TagName_impl {
 			self = .name(value)
 		}
 	}
-	public var NOSTR_TagName:String {
+	public var NOSTR_tag_namefield:String {
 		switch self {
-			case .dynamic(let char):
+			case .generic(let char):
 				return "#\(char)"
 			case .name(let name):
 				return name
@@ -36,7 +37,7 @@ extension Event.Tag.Name:NOSTR_TagName_impl {
 extension Event.Tag.Name:Equatable {
 	public static func == (lhs:Self, rhs:Self) -> Bool {
 		switch (lhs, rhs) {
-			case (.dynamic(let lchar), .dynamic(let rchar)):
+			case (.generic(let lchar), .generic(let rchar)):
 				return lchar == rchar
 			case (.name(let lname), .name(let rname)):
 				return lname == rname
@@ -50,7 +51,7 @@ extension Event.Tag.Name:Equatable {
 extension Event.Tag.Name:Hashable {
 	public func hash(into hasher:inout Hasher) {
 		switch self {
-			case .dynamic(let char):
+			case .generic(let char):
 				hasher.combine(0)
 				hasher.combine(char)
 			case .name(let name):

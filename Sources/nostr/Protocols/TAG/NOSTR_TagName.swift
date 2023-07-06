@@ -1,80 +1,65 @@
-/// a default implementation of all the required protocols for a nostr tag name.
-public typealias NOSTR_TagName_impl = NOSTR_TagName_expl & CodingKey & Codable & LosslessStringConvertible & ExpressibleByStringLiteral
-
-/// the discrete protocol for conveying nostr tag names.
-/// encodes to and from a string that represents the "tag name" and is encoded in the apropriate places where needed.
-/// - examples of tag names:
-/// 	- `#a`
-/// 	- `#p`
-///		- `relay`
-///		- `challenge`
-public protocol NOSTR_TagName_expl:CodingKey, Codable, LosslessStringConvertible, ExpressibleByStringLiteral, Hashable, Equatable {
-	/// represents the nostr tag name as a string representation.
-	var NOSTR_TagName:String { get }
-
-	/// initialize from a string representation of the nostr tag name.
-	/// - NOTE: should throw if passed a zero-length string.
-	init(NOSTR_TagName:String) throws
+public protocol NOSTR_tagged_type {
+	associatedtype NOSTR_tagged_type_namefield_TYPE:NOSTR_tag_namefield
+	associatedtype NOSTR_tagged_type_indexfield_TYPE:NOSTR_tag_indexfield
+	static var NOSTR_tagged_type_namefield:NOSTR_tagged_type_namefield_TYPE { get }
+	init(NOSTR_tag_indexfield:NOSTR_tagged_type_indexfield_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws
 }
 
-// default implementation for CodingKey
-extension CodingKey where Self:NOSTR_TagName_impl {
-	public init?(stringValue:String) {
-		try? self.init(NOSTR_TagName:stringValue)
+extension NOSTR_tagged_inst where Self:NOSTR_tagged_type, NOSTR_tagged_type_namefield_TYPE == NOSTR_tag_namefield_TYPE {
+	public var NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE {
+		return Self.NOSTR_tagged_type_namefield
 	}
-	public var stringValue:String {
-		return self.NOSTR_TagName
-	}
-	public init?(intValue:Int) {
-		return nil
-	}
-	public var intValue:Int? {
-		return nil
+	public init(NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws {
+		try self.init(NOSTR_tag_namefield:Self.NOSTR_tagged_type_namefield, NOSTR_tag_indexfield:NOSTR_tag_indexfield, NOSTR_tag_addlfields:NOSTR_tag_addlfields)
 	}
 }
 
-// default implementation for Decodable
-extension Decodable where Self:NOSTR_TagName_impl {
-	public init(from decoder:Decoder) throws {
-		let container = try decoder.singleValueContainer()
-		let getVal: String = try container.decode(String.self)
-		try self.init(NOSTR_TagName:getVal)
+public protocol NOSTR_tagged_inst:ExpressibleByArrayLiteral {
+	associatedtype ArrayLiteralType = String
+	associatedtype NOSTR_tag_namefield_TYPE:NOSTR_tag_namefield
+	associatedtype NOSTR_tag_indexfield_TYPE:NOSTR_tag_indexfield
+
+	var NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE { get }
+	var NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE { get }
+	var NOSTR_tag_addlfields:[any NOSTR_tag_addlfield] { get }
+
+	init(NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE, NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws
+}
+
+// everyone gets a default implementation of the encoding and decoding
+extension NOSTR_tagged_inst {
+	// encode
+	// unkeyed container
+	internal func encode(unkeyedForm unkeyedContainer:inout UnkeyedEncodingContainer) throws {
+		try unkeyedContainer.encode(NOSTR_tag_namefield.NOSTR_tag_namefield)
+		try unkeyedContainer.encode(NOSTR_tag_indexfield.NOSTR_tag_indexfield)
+		for addlfield in self.NOSTR_tag_addlfields {
+			try unkeyedContainer.encode(addlfield.NOSTR_tag_addlfield)
+		}
+	}
+
+	// decode
+	// unkeyed container
+	internal init(unkeyedForm unkeyedContainer:inout UnkeyedDecodingContainer) throws {
+		let makeName = try NOSTR_tag_namefield_TYPE(NOSTR_tag_namefield:try unkeyedContainer.decode(String.self))
+		let makeIndexField = try NOSTR_tag_indexfield_TYPE(NOSTR_tag_indexfield:try unkeyedContainer.decode(String.self))
+		var makeAddlFields:[any NOSTR_tag_addlfield] = []
+		while !unkeyedContainer.isAtEnd {
+			makeAddlFields.append(try unkeyedContainer.decode(String.self))
+		}
+		try self.init(NOSTR_tag_namefield:makeName, NOSTR_tag_indexfield:makeIndexField, NOSTR_tag_addlfields:makeAddlFields)
 	}
 }
 
-// default implementation for Encodable
-extension Encodable where Self:NOSTR_TagName_impl {
-	public func encode(to encoder:Encoder) throws {
-		var container = encoder.singleValueContainer()
-		try container.encode(self.NOSTR_TagName)
+// everyone gets a default implementation of EspressibleByArrayLiteral
+extension NOSTR_tagged_inst {
+	public init(arrayLiteral elements:String...) {
+		let makeName = try! NOSTR_tag_namefield_TYPE(NOSTR_tag_namefield:elements[0])
+		let makeIndexField = try! NOSTR_tag_indexfield_TYPE(NOSTR_tag_indexfield:elements[1])
+		var makeAddlFields:[any NOSTR_tag_addlfield] = []
+		for element in elements[2...] {
+			makeAddlFields.append(element)
+		}
+		try! self.init(NOSTR_tag_namefield:makeName, NOSTR_tag_indexfield:makeIndexField, NOSTR_tag_addlfields:makeAddlFields)
 	}
 }
-
-// default implementation for LosslessStringConvertible
-extension LosslessStringConvertible where Self:NOSTR_TagName_impl {
-	public init?(_ description: String) {
-		try? self.init(NOSTR_TagName:description)
-	}
-	public var description:String {
-		return self.NOSTR_TagName
-	}
-}
-
-extension ExpressibleByStringLiteral where Self:NOSTR_TagName_impl {
-	public init(stringLiteral value: String) {
-		try! self.init(NOSTR_TagName:value)
-	}
-}
-
-// // String can directly apply an explicit conformance to NOSTR_TagName_expl
-// extension String:NOSTR_TagName_expl {
-// 	public var NOSTR_TagName:String {
-// 		return self
-// 	}
-// 	public init(NOSTR_TagName value:String) throws {
-// 		guard value.count > 0 else {
-// 			throw Event.Tag.Name.ZeroLengthError()
-// 		}
-// 		self = value
-// 	}
-// }	

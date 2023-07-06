@@ -13,7 +13,7 @@ public struct Filter {
 	/// limit the number of events returned
 	public var limit:UInt32?
 	/// returned events must be authored by one of these public keys
-	public var authors:Set<nostr.Key>?
+	public var authors:Set<nostr.PublicKey>?
 
 	/// create a new filter
 	public init(
@@ -22,7 +22,7 @@ public struct Filter {
 		since:Date? = nil,
 		until:Date? = nil,
 		limit:UInt32? = nil,
-		authors:Set<nostr.Key>? = nil
+		authors:Set<nostr.PublicKey>? = nil
 	) {
 		self.ids = ids
 		self.kinds = kinds
@@ -58,7 +58,7 @@ extension Filter:Codable {
 			self.until = nil
 		}
 		do {
-			self.authors = try container.decode(Set<nostr.Key>.self, forKey: .authors)
+			self.authors = try container.decode(Set<nostr.PublicKey>.self, forKey: .authors)
 		} catch {
 			self.authors = nil
 		}

@@ -19,17 +19,40 @@ extension Event {
 	///		- as attached to relay filters (dynamic tags only)
 	///			- `{"#p", "dynamic tag name"...}`
 	/// - note: tags cannot be empty, and must have a name of at least one character.
-	public struct Tag:NOSTR_Tag_impl {
+	public struct Tag {
 		/// the type of tag.
-		public let NOSTR_TagName:Name
+		public let name:Name
 		/// additional info associated with the tag
-		public let NOSTR_TagInfo:[String]
-
+		public let index:String
 		/// initialize from a tag name and tag info
-		public init(NOSTR_TagName:Name, NOSTR_TagInfo:[String]) {
-			self.NOSTR_TagName = NOSTR_TagName
-			self.NOSTR_TagInfo = NOSTR_TagInfo
-		}
+		public let additionalInfo:[String]
+	}
+}
+
+extension Event.Tag:NOSTR_tagged_inst {
+	/// the type of tag.
+	public typealias NOSTR_tag_namefield_TYPE = Event.Tag.Name
+	/// additional info associated with the tag
+	public typealias NOSTR_tag_indexfield_TYPE = String
+
+	/// initialize from a tag name and tag info
+	public init(NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE, NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws {
+		self.name = NOSTR_tag_namefield
+		self.index = NOSTR_tag_indexfield
+		self.additionalInfo = NOSTR_tag_addlfields.map { $0.NOSTR_tag_addlfield }
+	}
+
+	/// the type of tag.
+	public var NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE {
+		return self.name
+	}
+	/// additional info associated with the tag
+	public var NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE {
+		return self.index
+	}
+	/// additional info associated with the tag
+	public var NOSTR_tag_addlfields:[any NOSTR_tag_addlfield] {
+		return self.additionalInfo
 	}
 }
 

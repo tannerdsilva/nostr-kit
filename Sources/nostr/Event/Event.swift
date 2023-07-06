@@ -34,8 +34,8 @@ extension nostr.Event:Codable {
 		self.uid = try container.decode(UID.self, forKey: .uid)
 		let getSig = try container.decode(String.self, forKey: .sig)
 		self.sig = getSig
-		self.tags = try container.decode([Tag].self, forKey: .tags)
-		self.pubkey = try container.decode(Key.self, forKey: .pubkey)
+		self.tags = try container.decode(Tags.self, forKey: .tags)
+		self.pubkey = try container.decode(PublicKey.self, forKey: .pubkey)
 		self.created = try container.decode(Date.self, forKey: .created)
 		self.kind = Kind(rawValue:try! container.decode(Int.self, forKey: .kind))!
 		self.content = try container.decode(String.self, forKey: .content)

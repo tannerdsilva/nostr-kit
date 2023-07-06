@@ -56,10 +56,10 @@ extension KeyPair {
 	public static func generateNew() throws -> Self {
 		let genesis: secp256k1.Signing.PrivateKey = try secp256k1.Signing.PrivateKey()
 		let privKey = genesis.rawRepresentation.bytes.asRAW_val({ keyVal in
-			return Key(keyVal)!
+			return SecretKey(keyVal)!
 		})
 		let pubKey = genesis.publicKey.xonly.bytes.asRAW_val({ keyVal in
-			return Key(keyVal)!
+			return PublicKey(keyVal)!
 		})
 		return KeyPair(pubkey:pubKey, seckey:privKey)
 	}
@@ -103,8 +103,8 @@ extension KeyPair:Codable {
 	// Codable
 	public init(from decoder:Decoder) throws {
 		let container = try decoder.container(keyedBy:CodingKeys.self)
-		let pubkey = try container.decode(Key.self, forKey:.pubkey)
-		let seckey = try container.decode(Key.self, forKey:.seckey)
+		let pubkey = try container.decode(PublicKey.self, forKey:.pubkey)
+		let seckey = try container.decode(SecretKey.self, forKey:.seckey)
 		self.init(pubkey:pubkey, seckey:seckey)
 	}
 	public func encode(to encoder:Encoder) throws {

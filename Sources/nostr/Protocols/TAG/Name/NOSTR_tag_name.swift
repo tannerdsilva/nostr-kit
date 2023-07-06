@@ -5,134 +5,52 @@
 /// 	- `#p`
 /// 	- `relay`
 /// 	- `challenge`
-public protocol NOSTR_tag_name:CodingKey, Codable, ExpressibleByStringLiteral, Hashable, Equatable {
-	/// if a nostr tag is represented as an unkeyed container of stringlike objects, this is the primitive type that defines the boundaries around the "stringlike-ness"
-	associatedtype NOSTR_tag_name_REPTYPE = LosslessStringConvertible
+
+public protocol NOSTR_tag_namefield:ExpressibleByStringLiteral {
+	associatedtype NOSTR_tag_namefield_ERROR_zerolength:Swift.Error
 
 	/// represents the nostr tag name as a string representation.
-	var NOSTR_tag_name:NOSTR_tag_name_REPTYPE { get }
+	var NOSTR_tag_namefield:String { get }
 
 	/// initialize from a string representation of the nostr tag name.
-	init(NOSTR_tag_name:NOSTR_tag_name_REPTYPE) throws
+	/// - MUST throw `NOSTR_tag_namefield_ERROR_zerolength` if the string representation is zero length.
+	init(NOSTR_tag_namefield:String) throws
 }
 
-// string uses itself as the associatedtype to conform to the protocol
-extension String:NOSTR_tag_name {
-	public typealias NOSTR_tag_name_REPTYPE = Self
-	public var NOSTR_tag_name:NOSTR_tag_name_REPTYPE {
+// everyone gets a default implementation of EspressibleByStringLiteral
+extension NOSTR_tag_namefield {
+	public init(stringLiteral value:String) {
+		guard value.NOSTR_tag_namefield.count > 0 else {
+			fatalError("string literal for NOSTR_tag_namefield must be non-zero length")
+		}
+		try! self.init(NOSTR_tag_namefield:value)
+	}
+}
+
+// string implementation for protocol
+extension String:NOSTR_tag_namefield {
+	public typealias NOSTR_tag_namefield_ERROR_zerolength = nostr.Event.Tag.Name.ZeroLengthError
+	public var NOSTR_tag_namefield:String {
 		return self
 	}
-	public init(NOSTR_tag_name:NOSTR_tag_name_REPTYPE) throws {
-		self = NOSTR_tag_name
-	}
-}
-
-// default implementations when the associatedtype is a string
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE == String {
-	// codingkey
-	public init?(stringValue:String) {
-		try? self.init(NOSTR_tag_name:stringValue)
-	}
-	public var stringValue:String {
-		return self.NOSTR_tag_name
-	}
-	public init?(intValue:Int) {
-		return nil
-	}
-	public var intValue:Int? {
-		return nil
-	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE == String {
-	// expressiblebystringliteral
-	public init(stringLiteral value:String) {
-		try! self.init(NOSTR_tag_name:value)
-	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE == String {
-	// hashable
-	public func hash(into hasher:inout Hasher) {
-		hasher.combine(self.NOSTR_tag_name)
-	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE == String {
-	// equatable
-	public static func ==(lhs:Self, rhs:Self) -> Bool {
-		return lhs.NOSTR_tag_name == rhs.NOSTR_tag_name
-	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE == String {
-	// codable
-	public init(from decoder:Decoder) throws {
-		let container = try decoder.singleValueContainer()
-		let string = try container.decode(String.self)
-		try self.init(NOSTR_tag_name:string)
-	}
-	public func encode(to encoder:Encoder) throws {
-		var container = encoder.singleValueContainer()
-		try container.encode(self.NOSTR_tag_name)
-	}
-}
-
-// default implementations when the associatedtype is losslessstringconvertible
-extension LosslessStringConvertible where Self:NOSTR_tag_name {
-	typealias NOSTR_tag_name_REPTYPE = Self
-	public init(NOSTR_tag_name:Self) throws {
-		self = NOSTR_tag_name
-	}
-	public var NOSTR_tag_name:Self {
-		return self
-	}
-}
-
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE:LosslessStringConvertible {
-	// codingkey
-	public init?(stringValue:String) {
-		guard let makeRepType = NOSTR_tag_name_REPTYPE(stringValue) else {
-			return nil
+	public init(NOSTR_tag_namefield:String) throws {
+		guard NOSTR_tag_namefield.count > 0 else {
+			throw NOSTR_tag_namefield_ERROR_zerolength()
 		}
-		try? self.init(NOSTR_tag_name:makeRepType)
-	}
-	public var stringValue:String {
-		return self.NOSTR_tag_name.description
-	}
-	public init?(intValue:Int) {
-		return nil
-	}
-	public var intValue:Int? {
-		return nil
+		self = NOSTR_tag_namefield
 	}
 }
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE:LosslessStringConvertible {
-	// expressiblebystringliteral
-	public init(stringLiteral value:String) {
-		try! self.init(NOSTR_tag_name:NOSTR_tag_name_REPTYPE(value)!)
+
+// substring implementation for protocol
+extension Substring:NOSTR_tag_namefield {
+	public typealias NOSTR_tag_namefield_ERROR_zerolength = nostr.Event.Tag.Name.ZeroLengthError
+	public var NOSTR_tag_namefield:String {
+		return String(self)
 	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE:LosslessStringConvertible {
-	// hashable
-	public func hash(into hasher:inout Hasher) {
-		hasher.combine(self.NOSTR_tag_name.description)
-	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE:LosslessStringConvertible {
-	// equatable
-	public static func ==(lhs:Self, rhs:Self) -> Bool {
-		return lhs.NOSTR_tag_name.description == rhs.NOSTR_tag_name.description
-	}
-}
-extension NOSTR_tag_name where NOSTR_tag_name_REPTYPE:LosslessStringConvertible {
-	// codable
-	public init(from decoder:Decoder) throws {
-		let container = try decoder.singleValueContainer()
-		let string = try container.decode(String.self)
-		guard let makeRepType = NOSTR_tag_name_REPTYPE(string) else {
-			throw DecodingError.dataCorruptedError(in:container, debugDescription:"could not convert string to \(NOSTR_tag_name_REPTYPE.self)")
+	public init(NOSTR_tag_namefield:String) throws {
+		guard NOSTR_tag_namefield.count > 0 else {
+			throw NOSTR_tag_namefield_ERROR_zerolength()
 		}
-		try self.init(NOSTR_tag_name:makeRepType)
-	}
-	public func encode(to encoder:Encoder) throws {
-		var container = encoder.singleValueContainer()
-		try container.encode(self.NOSTR_tag_name.description)
+		self = NOSTR_tag_namefield[...]
 	}
 }
