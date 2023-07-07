@@ -7,7 +7,7 @@
 /// 	- `challenge`
 
 public protocol NOSTR_tag_namefield:ExpressibleByStringLiteral {
-	associatedtype NOSTR_tag_namefield_ERROR_zerolength:Swift.Error
+	associatedtype NOSTR_tag_namefield_ERROR_zerolength:Swift.Error = nostr.Event.Tag.Name.ZeroLengthError
 
 	/// represents the nostr tag name as a string representation.
 	var NOSTR_tag_namefield:String { get }
@@ -29,7 +29,6 @@ extension NOSTR_tag_namefield {
 
 // string implementation for protocol
 extension String:NOSTR_tag_namefield {
-	public typealias NOSTR_tag_namefield_ERROR_zerolength = nostr.Event.Tag.Name.ZeroLengthError
 	public var NOSTR_tag_namefield:String {
 		return self
 	}
@@ -43,7 +42,6 @@ extension String:NOSTR_tag_namefield {
 
 // substring implementation for protocol
 extension Substring:NOSTR_tag_namefield {
-	public typealias NOSTR_tag_namefield_ERROR_zerolength = nostr.Event.Tag.Name.ZeroLengthError
 	public var NOSTR_tag_namefield:String {
 		return String(self)
 	}

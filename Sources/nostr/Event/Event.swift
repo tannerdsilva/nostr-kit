@@ -10,7 +10,7 @@ public struct Event {
 	/// the unique identifier for the event
 	public var uid:UID = UID()
 	/// the cryptographic signature for the event
-	public var sig:String = ""
+	public var sig:Signature = Signature()
 	/// the tags attached to the event
 	public var tags = Tags()
 	/// the author of the event
@@ -34,7 +34,7 @@ extension nostr.Event:Codable {
 		self.uid = try container.decode(UID.self, forKey: .uid)
 		let getSig = try container.decode(String.self, forKey: .sig)
 		self.sig = getSig
-		self.tags = try container.decode(Tags.self, forKey: .tags)
+		self.tags = try container.decode([nostr.Event.Tag].self, forKey: .tags)
 		self.pubkey = try container.decode(PublicKey.self, forKey: .pubkey)
 		self.created = try container.decode(Date.self, forKey: .created)
 		self.kind = Kind(rawValue:try! container.decode(Int.self, forKey: .kind))!
@@ -84,7 +84,9 @@ extension nostr.Event {
 				// the event is not valid if the uid does not match the commitment
 				return false
 			}
-			let sig64 = try Hex.decode(self.sig)
+			let sig64 = self.sig.asRAW_val({ rv in
+				return Array(rv)
+			})
 			let ev_pubkey = self.pubkey.asRAW_val({ pkVal in
 				return Array(pkVal)
 			})
@@ -113,7 +115,7 @@ extension nostr.Event {
 		})
 		let signature = try key.schnorr.signature(message:&digest, auxiliaryRand:&aux_rand)
 		signature.rawRepresentation.bytes.asRAW_val({ inputVal in
-			self.sig = Hex.encode(inputVal)
+			self.sig = Signature(inputVal)!
 		})
 	}
 }

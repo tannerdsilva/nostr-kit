@@ -11,9 +11,9 @@ extension Event.Tag {
 }
 
 extension Event.Tag.Name:NOSTR_tag_namefield {
-    public typealias NOSTR_tag_namefield_ERROR_zerolength = ZeroLengthError
 	/// this is the "primary truth" initializer for this type.
-	public init(NOSTR_tag_namefield value:String) throws {
+	public init<N>(NOSTR_tag_namefield: N) throws where N : NOSTR_tag_namefield {
+		let value = NOSTR_tag_namefield.NOSTR_tag_namefield
 		if value.count == 2 && value.first! == "#" && value.last!.isLetter == true {
 			self = .generic(value.lowercased().last!)
 		} else {
@@ -64,4 +64,12 @@ extension Event.Tag.Name:Hashable {
 extension Event.Tag.Name {
 	/// thrown when a tag name of zero length is encountered
 	public struct ZeroLengthError:Swift.Error {}
+
+	/// thrown when an expected dynamic tag key is initialized with a string of length greater than 1 or # + 1.
+	public struct DynamicOverflowError:Swift.Error {
+		public let encounteredValue:String
+		public init(encounteredValue:String) {
+			self.encounteredValue = encounteredValue
+		}
+	}
 }

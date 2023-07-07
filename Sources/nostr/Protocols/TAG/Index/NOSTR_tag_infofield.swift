@@ -1,6 +1,6 @@
 /*
-    ["e", <32-bytes hex of the id of another event>, <recommended relay URL>],
-    ["p", <32-bytes hex of a pubkey>, <recommended relay URL>],
+	["e", <32-bytes hex of the id of another event>, <recommended relay URL>],
+	["p", <32-bytes hex of a pubkey>, <recommended relay URL>],
 */
 
 public protocol NOSTR_tag_indexfield:ExpressibleByStringLiteral {
@@ -39,10 +39,10 @@ extension Substring:NOSTR_tag_indexfield {
 	public var NOSTR_tag_indexfield:String {
 		return String(self)
 	}
-	public init(NOSTR_tag_indexfield:String) throws {
-		guard NOSTR_tag_indexfield.count > 0 else {
+	public init<I>(NOSTR_tag_indexfield:I) throws where I:NOSTR_tag_indexfield {
+		guard NOSTR_tag_indexfield.NOSTR_tag_indexfield.count > 0 else {
 			throw NOSTR_tag_indexfield_ERROR_zerolength()
 		}
-		self = NOSTR_tag_indexfield[...]
+		self = NOSTR_tag_indexfield.NOSTR_tag_indexfield[...]
 	}
 }

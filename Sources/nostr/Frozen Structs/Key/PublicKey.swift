@@ -162,18 +162,15 @@ extension PublicKey {
 }
 
 extension nostr.PublicKey:NOSTR_tag_indexfield {
+    public init<I>(NOSTR_tag_indexfield: I) throws where I : NOSTR_tag_indexfield {
+        try self.init(hexEncodedString:NOSTR_tag_indexfield.NOSTR_tag_indexfield)
+    }
 	public var NOSTR_tag_indexfield:String {
 		return self.hexEncodedString
-	}
-	public init(NOSTR_tag_indexfield:String) throws {
-		try self.init(hexEncodedString:NOSTR_tag_indexfield)
 	}
 }
 
 extension nostr.PublicKey:NOSTR_tagged_type {
-    public init(NOSTR_tag_indexfield: PublicKey, NOSTR_tag_addlfields: [any NOSTR_tag_addlfield]) throws {
-        self = NOSTR_tag_indexfield
-    }
+    public typealias NOSTR_tagged_type_indexfield_TYPE = Self
     public static var NOSTR_tagged_type_namefield:Event.Tag.Name = "p"
 }
-
