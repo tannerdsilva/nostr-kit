@@ -10,10 +10,10 @@ extension Event.Tag {
 	}
 }
 
-extension Event.Tag.Name:NOSTR_tag_namefield {
+extension Event.Tag.Name:NOSTR_tag_name {
 	/// this is the "primary truth" initializer for this type.
-	public init<N>(NOSTR_tag_namefield: N) throws where N : NOSTR_tag_namefield {
-		let value = NOSTR_tag_namefield.NOSTR_tag_namefield
+	public init(NOSTR_tag_name:String) throws {
+		let value = NOSTR_tag_name.NOSTR_tag_name
 		if value.count == 2 && value.first! == "#" && value.last!.isLetter == true {
 			self = .generic(value.lowercased().last!)
 		} else {
@@ -23,7 +23,7 @@ extension Event.Tag.Name:NOSTR_tag_namefield {
 			self = .name(value)
 		}
 	}
-	public var NOSTR_tag_namefield:String {
+	public var NOSTR_tag_name:String {
 		switch self {
 			case .generic(let char):
 				return "#\(char)"
@@ -65,8 +65,8 @@ extension Event.Tag.Name {
 	/// thrown when a tag name of zero length is encountered
 	public struct ZeroLengthError:Swift.Error {}
 
-	/// thrown when an expected dynamic tag key is initialized with a string of length greater than 1 or # + 1.
-	public struct DynamicOverflowError:Swift.Error {
+	/// thrown when an expected generic tag key is initialized with a string of length greater than 1 or # + 1.
+	public struct GenericOverflowError:Swift.Error {
 		public let encounteredValue:String
 		public init(encounteredValue:String) {
 			self.encounteredValue = encounteredValue

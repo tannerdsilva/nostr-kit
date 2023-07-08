@@ -161,16 +161,21 @@ extension PublicKey {
 	}
 }
 
-extension nostr.PublicKey:NOSTR_tag_indexfield {
-    public init<I>(NOSTR_tag_indexfield: I) throws where I : NOSTR_tag_indexfield {
-        try self.init(hexEncodedString:NOSTR_tag_indexfield.NOSTR_tag_indexfield)
-    }
-	public var NOSTR_tag_indexfield:String {
-		return self.hexEncodedString
-	}
-}
+extension PublicKey:NOSTR_tagged {
 
-extension nostr.PublicKey:NOSTR_tagged_type {
-    public typealias NOSTR_tagged_type_indexfield_TYPE = Self
-    public static var NOSTR_tagged_type_namefield:Event.Tag.Name = "p"
+    public init(NOSTR_tag_index: String, NOSTR_tag_addlfields: [any NOSTR_tag_addlfield]) throws {
+        self = try Self(hexEncodedString: NOSTR_tag_index)
+    }
+
+    public static var NOSTR_tagged_name:Event.Tag.Name {
+        return "p"
+    }
+
+    public var NOSTR_tag_indexfield:String {
+        return self.hexEncodedString
+    }
+
+    public var NOSTR_tag_addlfields: [any NOSTR_tag_addlfield] {
+        return []
+    }
 }

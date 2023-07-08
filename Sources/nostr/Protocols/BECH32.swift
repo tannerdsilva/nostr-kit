@@ -1,5 +1,7 @@
 import RAW
 
+/// a type definition for bech32 encoding. does not actually encode or decode anything, just provides a type definition for the encoding.
+/// - used primarily for implementing the `NOSTR_bech32_convertible` protocol.
 public struct NOSTR_bech32_TL_DEF {
 	let type:UInt8
 	let length:UInt8?

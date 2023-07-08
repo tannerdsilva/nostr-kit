@@ -7,6 +7,8 @@ import secp256k1
 
 /// the infamous nostr event. this is the core data structure that is used to represent all data in the nostr network.
 public struct Event {
+	public var availableTagTypes:[any NOSTR_tag_name] = [Tag.self]
+
 	/// the unique identifier for the event
 	public var uid:UID = UID()
 	/// the cryptographic signature for the event
@@ -32,9 +34,8 @@ extension nostr.Event:Codable {
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		self.uid = try container.decode(UID.self, forKey: .uid)
-		let getSig = try container.decode(String.self, forKey: .sig)
-		self.sig = getSig
-		self.tags = try container.decode([nostr.Event.Tag].self, forKey: .tags)
+		self.sig = try container.decode(Signature.self, forKey: .sig)
+		self.tags = try container.decode(Event.Tags.self, forKey: .tags)
 		self.pubkey = try container.decode(PublicKey.self, forKey: .pubkey)
 		self.created = try container.decode(Date.self, forKey: .created)
 		self.kind = Kind(rawValue:try! container.decode(Int.self, forKey: .kind))!
@@ -46,7 +47,11 @@ extension nostr.Event:Codable {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		try container.encode(uid, forKey: .uid)
 		try container.encode(sig, forKey: .sig)
-		try container.encode(tags, forKey: .tags)
+		var nestedKeyedContainer = container.nestedUnkeyedContainer(forKey: .tags)
+		for tag in tags {
+			try nestedKeyedContainer.encode(tag)
+		}
+		
 		try container.encode(pubkey, forKey: .pubkey)
 		try container.encode(created, forKey: .created)
 		try container.encode(kind.rawValue, forKey: .kind)

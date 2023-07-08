@@ -1,6 +1,8 @@
 /*
-    ["e", <32-bytes hex of the id of another event>, <recommended relay URL>],
-    ["p", <32-bytes hex of a pubkey>, <recommended relay URL>],
+
+	["e", <32-bytes hex of the id of another event>, <recommended relay URL>]
+	["p", <32-bytes hex of a pubkey>, <recommended relay URL>]
+
 */
 
 public protocol NOSTR_tag_addlfield:ExpressibleByStringLiteral {

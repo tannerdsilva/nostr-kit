@@ -29,7 +29,7 @@ extension Event {
 	}
 }
 
-extension Event.Tag:NOSTR_tagged_inst {
+extension Event.Tag:NOSTR_tag {
 	/// the type of tag.
 	public typealias NOSTR_tag_namefield_TYPE = Event.Tag.Name
 	/// additional info associated with the tag
