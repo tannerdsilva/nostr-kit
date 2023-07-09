@@ -5,7 +5,7 @@ public struct Filter {
 	/// event uids to filter by
 	public var ids:Set<String>?
 	/// event kinds to filter by
-	public var kinds:Set<nostr.Event.Kind>? = nil
+	public var kinds:Set<nostr.Event.Kind>?
 	/// retruned events will be limited to those that follow this date
 	public var since:Date?
 	/// returned events will be limited to those that precede this date
@@ -13,17 +13,8 @@ public struct Filter {
 	/// limit the number of events returned
 	public var limit:UInt32?
 	/// returned events must be authored by one of these public keys
-	public var authors:Set<nostr.Key>?
+	public var authors:Set<nostr.PublicKey>?
 
-	/// returned events must contain one of the following event id `#e` tags
-	public var tag_referenced_ids:Set<String>?
-	/// returned events must contain one of the following public key `#p` tags
-	public var tag_pubkeys:Set<nostr.Key>?
-	/// returned events must contain one of the following hashtag `#t` tags
-	public var tag_hashtag:Set<String>?
-	/// returned events must contain one of the following parameter `#d` tags
-	public var tag_parameter:Set<String>?
-	
 	/// create a new filter
 	public init(
 		ids:Set<String>? = nil,
@@ -31,11 +22,7 @@ public struct Filter {
 		since:Date? = nil,
 		until:Date? = nil,
 		limit:UInt32? = nil,
-		authors:Set<nostr.Key>? = nil,
-		tag_referenced_ids:Set<String>? = nil,
-		tag_pubkeys:Set<nostr.Key>? = nil,
-		tag_hashtag:Set<String>? = nil,
-		tag_parameter:Set<String>? = nil
+		authors:Set<nostr.PublicKey>? = nil
 	) {
 		self.ids = ids
 		self.kinds = kinds
@@ -43,10 +30,6 @@ public struct Filter {
 		self.until = until
 		self.limit = limit
 		self.authors = authors
-		self.tag_referenced_ids = tag_referenced_ids
-		self.tag_pubkeys = tag_pubkeys
-		self.tag_hashtag = tag_hashtag
-		self.tag_parameter = tag_parameter
 	}
 }
 
@@ -75,7 +58,7 @@ extension Filter:Codable {
 			self.until = nil
 		}
 		do {
-			self.authors = try container.decode(Set<nostr.Key>.self, forKey: .authors)
+			self.authors = try container.decode(Set<nostr.PublicKey>.self, forKey: .authors)
 		} catch {
 			self.authors = nil
 		}
@@ -83,26 +66,6 @@ extension Filter:Codable {
 			self.limit = try container.decode(UInt32.self, forKey: .limit)
 		} catch {
 			self.limit = nil
-		}
-		do {
-			self.tag_referenced_ids = try container.decode(Set<String>.self, forKey: .tag_referenced_ids)
-		} catch {
-			self.tag_referenced_ids = nil
-		}
-		do {
-			self.tag_pubkeys = try container.decode(Set<nostr.Key>.self, forKey: .tag_pubkeys)
-		} catch {
-			self.tag_pubkeys = nil
-		}
-		do {
-			self.tag_hashtag = try container.decode(Set<String>.self, forKey: .tag_hashtag)
-		} catch {
-			self.tag_hashtag = nil
-		}
-		do {
-			self.tag_parameter = try container.decode(Set<String>.self, forKey: .tag_parameter)
-		} catch {
-			self.tag_parameter = nil
 		}
 	}
 
@@ -127,18 +90,6 @@ extension Filter:Codable {
 		if self.limit != nil {
 			try container.encode(limit, forKey: .limit)
 		}
-		if self.tag_referenced_ids != nil {
-			try container.encode(tag_referenced_ids, forKey: .tag_referenced_ids)
-		}
-		if self.tag_pubkeys != nil {
-			try container.encode(tag_pubkeys, forKey: .tag_pubkeys)
-		}
-		if self.tag_hashtag != nil {
-			try container.encode(tag_hashtag, forKey: .tag_hashtag)
-		}
-		if self.tag_parameter != nil {
-			try container.encode(tag_parameter, forKey: .tag_parameter)
-		}
 	}
 }
 
@@ -150,10 +101,6 @@ extension nostr.Filter:Hashable, Equatable {
 			&& lhs.until == rhs.until
 			&& lhs.authors == rhs.authors
 			&& lhs.limit == rhs.limit
-			&& lhs.tag_referenced_ids == rhs.tag_referenced_ids
-			&& lhs.tag_pubkeys == rhs.tag_pubkeys
-			&& lhs.tag_hashtag == rhs.tag_hashtag
-			&& lhs.tag_parameter == rhs.tag_parameter
 	}
 	public func hash(into hasher:inout Hasher) {
 		hasher.combine(ids)
@@ -162,10 +109,6 @@ extension nostr.Filter:Hashable, Equatable {
 		hasher.combine(until)
 		hasher.combine(authors)
 		hasher.combine(limit)
-		hasher.combine(tag_referenced_ids)
-		hasher.combine(tag_pubkeys)
-		hasher.combine(tag_hashtag)
-		hasher.combine(tag_parameter)
 	}
 }
 
@@ -177,9 +120,4 @@ fileprivate enum CodingKeys:String, CodingKey {
 	case until = "until"
 	case authors = "authors"
 	case limit = "limit"
-
-	case tag_referenced_ids = "#e"
-	case tag_pubkeys = "#p"
-	case tag_hashtag = "#t"
-	case tag_parameter = "#d"
 }

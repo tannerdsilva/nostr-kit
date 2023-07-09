@@ -10,9 +10,9 @@ public struct Event {
 	/// the unique identifier for the event
 	public var uid:UID = UID()
 	/// the cryptographic signature for the event
-	public var sig:String = ""
+	public var sig:Signature = Signature()
 	/// the tags attached to the event
-	public var tags = [Tag]()
+	public var tags = Tags()
 	/// the author of the event
 	public var pubkey = PublicKey()
 	/// the creation date of the event
@@ -32,12 +32,11 @@ extension nostr.Event:Codable {
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		self.uid = try container.decode(UID.self, forKey: .uid)
-		let getSig = try container.decode(String.self, forKey: .sig)
-		self.sig = getSig
-		self.tags = try container.decode([Tag].self, forKey: .tags)
-		self.pubkey = try container.decode(Key.self, forKey: .pubkey)
+		self.sig = try container.decode(Signature.self, forKey: .sig)
+		self.tags = try container.decode([Event.Tag].self, forKey: .tags)
+		self.pubkey = try container.decode(PublicKey.self, forKey: .pubkey)
 		self.created = try container.decode(Date.self, forKey: .created)
-		self.kind = Kind(rawValue:try! container.decode(Int.self, forKey: .kind))!
+		self.kind = Kind(rawValue:try container.decode(Int.self, forKey: .kind))!
 		self.content = try container.decode(String.self, forKey: .content)
 	}
 
@@ -46,7 +45,12 @@ extension nostr.Event:Codable {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		try container.encode(uid, forKey: .uid)
 		try container.encode(sig, forKey: .sig)
-		try container.encode(tags, forKey: .tags)
+		var nestedKeyedContainer = container.nestedUnkeyedContainer(forKey: .tags)
+		
+		for tag in tags {
+			try nestedKeyedContainer.encode(tag)
+		}
+		
 		try container.encode(pubkey, forKey: .pubkey)
 		try container.encode(created, forKey: .created)
 		try container.encode(kind.rawValue, forKey: .kind)
@@ -57,7 +61,7 @@ extension nostr.Event:Codable {
 extension nostr.Event {
 	fileprivate func commitment() -> [UInt8] {
 		let encoder = QuickJSON.Encoder()
-		let tagsString = String(bytes:try! encoder.encode(tags), encoding:.utf8)!
+		let tagsString = String(bytes:try! encoder.encode(tags.compactMap { Array($0) }), encoding:.utf8)!
 		let contentString = String(bytes:try! encoder.encode(self.content), encoding:.utf8)!
 		let commit = "[0,\"\(self.pubkey)\",\(Int64(self.created.timeIntervalSinceUnixDate())),\(self.kind.rawValue),\(tagsString),\(contentString)]"
 		return Array(commit.utf8)
@@ -84,7 +88,9 @@ extension nostr.Event {
 				// the event is not valid if the uid does not match the commitment
 				return false
 			}
-			let sig64 = try Hex.decode(self.sig)
+			let sig64 = self.sig.asRAW_val({ rv in
+				return Array(rv)
+			})
 			let ev_pubkey = self.pubkey.asRAW_val({ pkVal in
 				return Array(pkVal)
 			})
@@ -113,7 +119,7 @@ extension nostr.Event {
 		})
 		let signature = try key.schnorr.signature(message:&digest, auxiliaryRand:&aux_rand)
 		signature.rawRepresentation.bytes.asRAW_val({ inputVal in
-			self.sig = Hex.encode(inputVal)
+			self.sig = Signature(inputVal)!
 		})
 	}
 }

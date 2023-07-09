@@ -32,58 +32,58 @@ fileprivate func encodingReferenceDate() -> time_t {
 }
 internal let encDate = encodingReferenceDate()
 
-@frozen 
-public struct Date {
-	/// the primitive value of this instance.
-	/// represents the seconds elapsed since 00:00:00 UTC on 1 January 2001
-	private let rawVal:Double
+@frozen public struct Date {
+    /// The primitive value of this instance.
+    /// Represents the seconds elapsed since 00:00:00 UTC on 1 January 1970
+    private let rawVal:Double
 
-	/// initialize with the current time
-	public init() {
-		var makeTime = time_t()
-		time(&makeTime)
-		let gmt = gmtime(&makeTime)!
-		gmt.pointee.tm_isdst = 0
-		makeTime = timegm(gmt)
+    /// Initialize with the current time
+    public init() {
+        var makeTime = time_t()
+        time(&makeTime)
+        let gmt = gmtime(&makeTime)!
+        gmt.pointee.tm_isdst = 0
+        makeTime = timegm(gmt)
 
-		var Cnow = time_t()
-		let loc = localtime(&Cnow).pointee
-		var offset = Double(loc.tm_gmtoff)
-		if loc.tm_isdst > 0 {
-			offset -= 3600
-		}
+        var Cnow = time_t()
+        let loc = localtime(&Cnow).pointee
+        var offset = Double(loc.tm_gmtoff)
+        if loc.tm_isdst > 0 {
+            offset -= 3600
+        }
 
-		self.rawVal = difftime(makeTime, refDate) - offset
-	}
+        self.rawVal = difftime(makeTime, encDate) - offset
+    }
 
-	public init(unixInterval:Double) {
-		rawVal = unixInterval - 978307200
-	}
+    /// Initialize with a Unix epoch interval (seconds since 00:00:00 UTC on 1 January 1970)
+    public init(unixInterval:Double) {
+        rawVal = unixInterval
+    }
 
-	/// basic initializer based on the primitive
-	public init(referenceDate:Double) {
-		self.rawVal = referenceDate
-	}
+    /// Basic initializer based on the primitive (seconds since 00:00:00 UTC on 1 January 1970)
+    public init(referenceInterval:Double) {
+        self.rawVal = referenceInterval + 978307200
+    }
 
-	/// returns the difference in time between the called instance and passed date
-	public func timeIntervalSince(_ other:Self) -> Double {
-		return self.rawVal - other.rawVal
-	}
+    /// Returns the difference in time between the called instance and passed date
+    public func timeIntervalSince(_ other:Self) -> Double {
+        return self.rawVal - other.rawVal
+    }
 
-	/// returns a new value that is the sum of the current value and the passed interval
-	public func addingTimeInterval(_ interval:Double) -> Self {
-		return Self(referenceDate:self.rawVal + interval)
-	}
+    /// Returns a new value that is the sum of the current value and the passed interval
+    public func addingTimeInterval(_ interval:Double) -> Self {
+        return Self(referenceInterval:self.rawVal + interval)
+    }
 
-	/// returns the time interval since the reference date
-	public func timeIntervalSinceReferenceDate() -> Double {
-		return self.rawVal
-	}
+    /// Returns the time interval since Unix date
+    public func timeIntervalSinceUnixDate() -> Double {
+        return self.rawVal
+    }
 
-	/// returns the time interval since unix epoch
-	public func timeIntervalSinceUnixDate() -> Double {
-		return self.rawVal + 978307200
-	}
+    /// Returns the time interval since the reference date (00:00:00 UTC on 1 January 2001)
+    public func timeIntervalSinceReferenceDate() -> Double {
+        return self.rawVal - 978307200
+    }
 }
 
 extension Date:Codable {

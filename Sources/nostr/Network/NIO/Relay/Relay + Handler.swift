@@ -9,6 +9,11 @@ import Darwin.C
 #endif
 
 extension Relay {
+
+	/// handles primary nostr functionality for a client connection to a relay.
+	/// - implements NIP-01 parsing (JSON encoding and decoding)
+	/// - implements NIP-42 with automatic authentication
+	/// - implements NIP-20 for handling the results of publishing events
 	internal final class Handler:ChannelDuplexHandler, RemovableChannelHandler {
 		internal typealias InboundIn = ByteBuffer
 		internal typealias InboundOut = Message
@@ -28,6 +33,10 @@ extension Relay {
 		private let logger:Logger
 		private let url:Relay.URL
 		private var configuration:Relay.Client.Configuration
+
+		/// publishing structs that are currently waiting for an ok response.
+		/// - see NIP-20 for more information.
+		private var activePublishes:[Event.UID:Publishing] = [:]
 
 		internal init(url:Relay.URL, configuration:Relay.Client.Configuration) {
 			var makeLogger = Self.logger
@@ -68,6 +77,7 @@ extension Relay {
 			free(self.decoderPointer)
 			self.decoderPointer = nil
 			self.pool = nil
+			
 		}
 
 		internal func channelRead(context: ChannelHandlerContext, data: NIOAny) {
@@ -98,7 +108,7 @@ extension Relay {
 							}
 
 							#if DEBUG
-							self.logger.info("received nip-42 auth callenge.", metadata: ["challenge": "\(chalStr)"])
+							self.logger.info("received nip-42 auth challenge.", metadata: ["challenge": "\(chalStr)"])
 							#endif
 
 							self.writeNIP42Assertion(challenge:chalStr, context:context, promise:nil)
@@ -114,8 +124,23 @@ extension Relay {
 						}
 					case let .ok(evUID, didSucceed, message):
 						#if DEBUG
-						self.logger.info("remote peer says 'ok'.", metadata: ["message": "\(message)", "success": "\(didSucceed)", "event_uid": "\(evUID.description.prefix(8))"])
+						if didSucceed == true {
+							self.logger.info("remote peer says 'ok'.", metadata: ["message": "\(message)", "success": "\(didSucceed)", "event_uid": "\(evUID.description.prefix(8))"])
+						} else {
+							self.logger.error("remote peer says 'not ok'.", metadata: ["message": "\(message)", "success": "\(didSucceed)", "event_uid": "\(evUID.description.prefix(8))"])
+						}
 						#endif
+						if let publishing = self.activePublishes[evUID] {
+							switch didSucceed {
+								case true:
+									#if DEBUG
+									self.logger.info("got 'ok' publishing event uid: \(evUID)")
+									#endif
+									publishing.promise.succeed(Date())
+								case false:
+									publishing.promise.fail(Publishing.Failure(message:message))
+							}
+						}
 						break;
 					default:
 					break;
@@ -147,6 +172,18 @@ extension Relay {
 				#endif
 				context.fireErrorCaught(error)
 			}
+		}
+	}
+}
+
+extension Relay.Handler {
+	/// a struct that is used to track the publishing of an event.
+	internal func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.UID, channel:Channel) -> EventLoopFuture<Void> {
+		channel.eventLoop.submit {
+			#if DEBUG
+			self.logger.debug("adding publishing struct for event uid: \(evUID)")
+			#endif
+			self.activePublishes[evUID] = publishing
 		}
 	}
 }

@@ -27,7 +27,7 @@ extension CLI {
 
 			mutating func run() async throws {
 				self.name.trimExtensionIfExists(".nkey")
-				let keypair = try nostr.KeyPair(seckey:nostr.Key(nsec:nsec))
+				let keypair = try nostr.KeyPair(seckey:SecretKey(nsec:nsec))
 				let encoder = QuickJSON.Encoder()
 				let encoded = try encoder.encode(keypair)
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).nkey")

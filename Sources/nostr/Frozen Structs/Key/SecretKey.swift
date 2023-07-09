@@ -8,65 +8,15 @@ import Darwin.C
 
 import RAW
 
-/// a public key representation of a nostr key struct
-public typealias PublicKey = Key
-
-/// a secret key representation of a nostr key struct
-public typealias SecretKey = Key
-
-@frozen public struct Key {
+@frozen public struct SecretKey {
 	// 32 byte static buffer
 	internal var bytes: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 	// initialize a null structure
 	internal init() {}
-
-	/// initialize a key from an npub encoded string
-	/// - parameter npub: the npub encoded string to decode
-	public init(npub:String) throws {
-		let decoded = try Bech32.decode(npub)
-		guard decoded.hrp.lowercased() == "npub" else {
-			throw Error.invalidBech32HRP(decoded.hrp)
-		}
-		guard decoded.data.count == MemoryLayout<Self>.size else {
-			throw Error.invalidBech32DataLength(decoded.data.count)
-		}
-		self = decoded.data.asRAW_val { rawVal in 
-			return Self.init(rawVal)! /* this is safe because length has already been validated */
-		}
-	}
-
-	/// returns the bech32 encoded public key representation of this key
-	public func npubString() -> String {
-		return self.asRAW_val({ rawVal in
-			return Bech32.encode(hrp:"npub", rawVal)
-		})
-	}
-
-	/// initialize a key from an nsec encoded string
-	/// - parameter nsec: the nsec encoded string to decode
-	public init(nsec:String) throws {
-		let decoded = try Bech32.decode(nsec)
-		guard decoded.hrp.lowercased() == "nsec" else {
-			throw Error.invalidBech32HRP(decoded.hrp)
-		}
-		guard decoded.data.count == MemoryLayout<Self>.size else {
-			throw Error.invalidBech32DataLength(decoded.data.count)
-		}
-		self = decoded.data.asRAW_val { rawVal in 
-			return Self.init(rawVal)! /* this is safe because length has already been validated */
-		}
-	}
-
-	/// returns the bech32 encoded private key representation of this key
-	public func nsecString() -> String {
-		return self.asRAW_val({ rawVal in
-			return Bech32.encode(hrp:"nsec", rawVal)
-		})
-	}
 }
 
-extension Key:RAW_convertible {
+extension SecretKey:RAW_convertible {
 	/// initialize from raw bytes.
 	/// - this initializer will return nil if the size of the raw bytes is not equal to the size of the Key struct (32 bytes)
 	/// - this initializer will NEVER fail if the input data is exactly 32 bytes
@@ -84,7 +34,7 @@ extension Key:RAW_convertible {
 	}
 }
 
-extension Key:RAW_comparable {
+extension SecretKey:RAW_comparable {
 	// Lexigraphical sorting here
 	public static let rawCompareFunction:@convention(c) (UnsafePointer<RAW_val>?, UnsafePointer<RAW_val>?) -> Int32 = { a, b in
 		let aData = a!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
@@ -102,13 +52,11 @@ extension Key:RAW_comparable {
 	}
 }
 
-extension Key:HEX_convertible {
-	public var hexEncodedString:String {
-		get {
-			self.asRAW_val({
-				return Hex.encode($0, lowercaseOutput:true)
-			})
-		}
+extension SecretKey:HEX_convertible {
+	public func hexEncodedString() -> String {
+		self.asRAW_val({
+			return Hex.encode($0, lowercaseOutput:true)
+		})
 	}
 
 	public init(hexEncodedString: String) throws {
@@ -123,16 +71,7 @@ extension Key:HEX_convertible {
 	}
 }
 
-/// LosslessStringConvertible conformance 
-/// - based on a hex-encoded representation of the key bytes
-extension Key:CustomStringConvertible {
-	/// implements a hex-encoded representation of the key bytes
-	public var description:String {
-		return self.hexEncodedString
-	}
-}
-
-extension Key:Codable {
+extension SecretKey:Codable {
 	// decode implementation
 	public init(from decoder:Decoder) throws {
 		let container = try decoder.singleValueContainer()
@@ -142,11 +81,11 @@ extension Key:Codable {
 	// encode implementation
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(self.hexEncodedString)
+		try container.encode(self.hexEncodedString())
 	}
 }
 
-extension Key:Hashable, Equatable, Comparable {
+extension SecretKey:Hashable, Equatable, Comparable {
 	// Equatable
 	public static func == (lhs: Self, rhs: Self) -> Bool {
 		return lhs.asRAW_val({ lhsVal in
@@ -173,7 +112,7 @@ extension Key:Hashable, Equatable, Comparable {
 	}
 }
 
-extension Key {
+extension SecretKey {
 	public enum Error: Swift.Error {
 		/// thrown when decoding using ``Decodable` protocol. specifically thrown when a string value is successfully extraced froma single value container, but the string is not a valid hex-encoded string.
 		case encodedStringInvalid
@@ -186,5 +125,20 @@ extension Key {
 
 		/// thrown when the data returned from the bech32 decoder is shorter or longer than the size of the Key struct (32 bytes)
 		case invalidKeyLength(size_t)
+	}
+}
+
+extension SecretKey:NOSTR_bech32_raw {
+	public static var NOSTR_bech32_hrp: String {
+		return "nsec"
+	}
+}
+
+extension SecretKey {
+	public init(nsec:String) throws {
+		self = try Self(NOSTR_bech32:nsec)
+	}
+	public func nsecString() -> String {
+		return self.NOSTR_bech32()
 	}
 }

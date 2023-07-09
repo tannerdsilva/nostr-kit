@@ -19,7 +19,7 @@ extension KeyPair {
 			print(Colors.red("Secret key:"), terminator:"")
 			switch hex {
 				case true:
-					print(" \(seckey.description)")
+					print(" \(seckey.hexEncodedString)")
 				case false:
 					print(" \(seckey.nsecString())")
 			}

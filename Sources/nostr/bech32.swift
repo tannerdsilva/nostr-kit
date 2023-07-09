@@ -21,14 +21,14 @@ public struct Bech32 {
 	public static func decode(_ str:String) throws -> (hrp:String, data:[UInt8]) {
 		let strBytes = str.utf8
 		guard strBytes.count <= 2024 else {
-			throw Bech32.Error.stringLengthExceeded
+			throw Errors.StringLengthExceeded()
 		}
 		var lower:Bool = false
 		var upper:Bool = false
 		for c in strBytes {
 			// printable range
 			if c < 33 || c > 126 {
-				throw Bech32.Error.nonPrintableCharacter
+				throw Errors.NonPrintableCharacter()
 			}
 			// 'a' to 'z'
 			if c >= 97 && c <= 122 {
@@ -40,18 +40,18 @@ public struct Bech32 {
 			}
 		}
 		if lower && upper {
-			throw Bech32.Error.invalidCase
+			throw Errors.InvalidCase()
 		}
 		let pos = str.range(of:"1", options:.backwards)?.lowerBound
 		guard pos != nil else {
-			throw Bech32.Error.noChecksumMarker
+			throw Errors.NoChecksumMarker()
 		}
 		let intPos = str.distance(from:str.startIndex, to:pos!)
 		guard intPos >= 1 else {
-			throw Bech32.Error.incorrectHrpSize
+			throw Errors.IncorrectHRPSize()
 		}
 		guard intPos + 7 <= str.count else {
-			throw Bech32.Error.incorrectChecksumSize
+			throw Errors.IncorrectChecksumSize()
 		}
 		let vSize = str.count - 1 - intPos
 		var valuesArr = [UInt8](repeating: 0, count: vSize)
@@ -60,7 +60,7 @@ public struct Bech32 {
 			
 			let decInt = decCharset[Int(c)]
 			if decInt == 255 {
-				throw Bech32.Error.invalidCharacter
+				throw Errors.InvalidCharacter()
 			}
 			valuesArr[i] = decInt
 		}
@@ -69,7 +69,7 @@ public struct Bech32 {
 		let hrp = String(str.prefix(intPos))
 		try valuesArr.asRAW_val { asRaw in
 			guard verify(hrp:hrp, checksum:asRaw) else {
-				throw Bech32.Error.checksumMismatch
+				throw Errors.ChecksumMismatch()
 			}
 		}
 		return try Array(valuesArr[..<(vSize-6)]).asRAW_val { outPtr in
@@ -96,54 +96,17 @@ extension Bech32 {
 		"q", "p", "z", "r", "y", "9", "x", "8", "g", "f", "2", "t", "v", "d", "w", "0", "s", "3", "j", "n", "5", "4", "k", "h", "c", "e", "6", "m", "u", "a", "7", "l"
 	]
 
-	public enum Error:Swift.Error {
-		case nonUTF8String
-		case nonPrintableCharacter
-		case invalidCase
-		case noChecksumMarker
-		case incorrectHrpSize
-		case incorrectChecksumSize
-		case stringLengthExceeded
-		case invalidPadding
-		case invalidCharacter
-		case checksumMismatch
-		
-		public var errorDescription: String? {
-			switch self {
-			case .checksumMismatch:
-				return "Checksum doesn't match"
-			case .incorrectChecksumSize:
-				return "Checksum size too low"
-			case .incorrectHrpSize:
-				return "Human-readable-part is too small or empty"
-			case .invalidCase:
-				return "String contains mixed case characters"
-			case .invalidCharacter:
-				return "Invalid character met on decoding"
-			case .noChecksumMarker:
-				return "Checksum delimiter not found"
-			case .nonPrintableCharacter:
-				return "Non printable character in input string"
-			case .nonUTF8String:
-				return "String cannot be decoded by utf8 decoder"
-			case .stringLengthExceeded:
-				return "Input string is too long"
-			case .invalidPadding:
-				return "Invalid padding"
-			}
-		}
-	}
-
-	public enum Object {
-		public enum Error:Swift.Error {
-			case unknownHRP(String)
-		}
-
-		case nsec(String)
-
-		case npub(String)
-
-		case note(String)
+	/// errors that may be thrown related to bech32 encoding and decoding
+	public struct Errors {
+		public struct StringLengthExceeded:Swift.Error {}
+		public struct NonPrintableCharacter:Swift.Error {}
+		public struct InvalidCase:Swift.Error {}
+		public struct IncorrectHRPSize:Swift.Error {}
+		public struct IncorrectChecksumSize:Swift.Error {}
+		public struct InvalidCharacter:Swift.Error {}
+		public struct ChecksumMismatch:Swift.Error {}
+		public struct NoChecksumMarker:Swift.Error {}
+		public struct InvalidPadding:Swift.Error {}
 	}
 
 	internal static func polymod(_ values:RAW_val) -> UInt32 {
@@ -213,7 +176,7 @@ extension Bech32 {
 				out.append(UInt8((val << (outbits - bits)) & maxv))
 			}
 		} else if 0 != ((val << (outbits - bits)) & maxv) || bits >= inbits {
-			throw Bech32.Error.invalidPadding
+			throw Errors.InvalidPadding()
 		}
 		return out
 	}
