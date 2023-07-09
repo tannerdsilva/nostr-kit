@@ -14,28 +14,6 @@ import RAW
 
 	// initialize a null structure
 	internal init() {}
-
-	/// initialize a key from an nsec encoded string
-	/// - parameter nsec: the nsec encoded string to decode
-	public init(nsec:String) throws {
-		let decoded = try Bech32.decode(nsec)
-		guard decoded.hrp.lowercased() == "nsec" else {
-			throw Error.invalidBech32HRP(decoded.hrp)
-		}
-		guard decoded.data.count == MemoryLayout<Self>.size else {
-			throw Error.invalidBech32DataLength(decoded.data.count)
-		}
-		self = decoded.data.asRAW_val { rawVal in 
-			return Self.init(rawVal)! /* this is safe because length has already been validated */
-		}
-	}
-
-	/// returns the bech32 encoded private key representation of this key
-	public func nsecString() -> String {
-		return self.asRAW_val({ rawVal in
-			return Bech32.encode(hrp:"nsec", rawVal)
-		})
-	}
 }
 
 extension SecretKey:RAW_convertible {
@@ -75,12 +53,10 @@ extension SecretKey:RAW_comparable {
 }
 
 extension SecretKey:HEX_convertible {
-	public var hexEncodedString:String {
-		get {
-			self.asRAW_val({
-				return Hex.encode($0, lowercaseOutput:true)
-			})
-		}
+	public func hexEncodedString() -> String {
+		self.asRAW_val({
+			return Hex.encode($0, lowercaseOutput:true)
+		})
 	}
 
 	public init(hexEncodedString: String) throws {
@@ -105,7 +81,7 @@ extension SecretKey:Codable {
 	// encode implementation
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(self.hexEncodedString)
+		try container.encode(self.hexEncodedString())
 	}
 }
 
@@ -149,5 +125,20 @@ extension SecretKey {
 
 		/// thrown when the data returned from the bech32 decoder is shorter or longer than the size of the Key struct (32 bytes)
 		case invalidKeyLength(size_t)
+	}
+}
+
+extension SecretKey:NOSTR_bech32_raw {
+	public static var NOSTR_bech32_hrp: String {
+		return "nsec"
+	}
+}
+
+extension SecretKey {
+	public init(nsec:String) throws {
+		self = try Self(NOSTR_bech32:nsec)
+	}
+	public func nsecString() -> String {
+		return self.NOSTR_bech32()
 	}
 }

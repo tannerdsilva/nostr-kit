@@ -7,8 +7,6 @@ import secp256k1
 
 /// the infamous nostr event. this is the core data structure that is used to represent all data in the nostr network.
 public struct Event {
-	public var availableTagTypes:[any NOSTR_tag_name] = [Tag.self]
-
 	/// the unique identifier for the event
 	public var uid:UID = UID()
 	/// the cryptographic signature for the event
@@ -35,10 +33,10 @@ extension nostr.Event:Codable {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		self.uid = try container.decode(UID.self, forKey: .uid)
 		self.sig = try container.decode(Signature.self, forKey: .sig)
-		self.tags = try container.decode(Event.Tags.self, forKey: .tags)
+		self.tags = try container.decode([Event.Tag].self, forKey: .tags)
 		self.pubkey = try container.decode(PublicKey.self, forKey: .pubkey)
 		self.created = try container.decode(Date.self, forKey: .created)
-		self.kind = Kind(rawValue:try! container.decode(Int.self, forKey: .kind))!
+		self.kind = Kind(rawValue:try container.decode(Int.self, forKey: .kind))!
 		self.content = try container.decode(String.self, forKey: .content)
 	}
 
@@ -48,6 +46,7 @@ extension nostr.Event:Codable {
 		try container.encode(uid, forKey: .uid)
 		try container.encode(sig, forKey: .sig)
 		var nestedKeyedContainer = container.nestedUnkeyedContainer(forKey: .tags)
+		
 		for tag in tags {
 			try nestedKeyedContainer.encode(tag)
 		}
@@ -62,7 +61,7 @@ extension nostr.Event:Codable {
 extension nostr.Event {
 	fileprivate func commitment() -> [UInt8] {
 		let encoder = QuickJSON.Encoder()
-		let tagsString = String(bytes:try! encoder.encode(tags), encoding:.utf8)!
+		let tagsString = String(bytes:try! encoder.encode(tags.compactMap { Array($0) }), encoding:.utf8)!
 		let contentString = String(bytes:try! encoder.encode(self.content), encoding:.utf8)!
 		let commit = "[0,\"\(self.pubkey)\",\(Int64(self.created.timeIntervalSinceUnixDate())),\(self.kind.rawValue),\(tagsString),\(contentString)]"
 		return Array(commit.utf8)

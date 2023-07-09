@@ -15,6 +15,18 @@ extension Event {
 	}
 }
 
+extension Event.Signature:Codable {
+	public init(from decoder:Swift.Decoder) throws {
+		let container = try decoder.singleValueContainer()
+		let hexEncodedString = try container.decode(String.self)
+		try self.init(hexEncodedString:hexEncodedString)
+	}
+	public func encode(to encoder:Swift.Encoder) throws {
+		var container = encoder.singleValueContainer()
+		try container.encode(self.hexEncodedString())
+	}
+}
+
 extension Event.Signature:RAW_convertible {
 	public init?(_ value:RAW_val) {
 		guard value.mv_size == MemoryLayout<Self>.size else {
@@ -35,10 +47,8 @@ extension Event.Signature:RAW_comparable {
 	public static let rawCompareFunction:@convention(c) (UnsafePointer<RAW_val>?, UnsafePointer<RAW_val>?) -> Int32 = { a, b in
 		let aData = a!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
 		let bData = b!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
-		
 		let minLength = min(a!.pointee.mv_size, b!.pointee.mv_size)
 		let comparisonResult = memcmp(aData, bData, minLength)
-
 		if comparisonResult != 0 {
 			return Int32(comparisonResult)
 		} else {
@@ -59,7 +69,7 @@ extension Event.Signature:HEX_convertible {
 		})
 		self = makeSelf
 	}
-	public var hexEncodedString: String {
+	public func hexEncodedString() -> String {
 		self.asRAW_val { rval in
 			return Hex.encode(rval, lowercaseOutput:true)
 		}

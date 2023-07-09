@@ -6,21 +6,29 @@
 
 		- `NOSTR_tag` - a protocol expression of a single tag instance. every instance of this type should have the freedom to express any value in any field (name, index, or additional fields).
 
-		- `NOSTR_tagged` - a protocol that builds upon the concepts of `NOSTR_tag` where each instance of a conformant type expresses an instance of a tag. however, `NOSTR_tagged` statically links the tag name to each instance of the type. this is useful for "tentpole" structures such as public keys (which ALWAYS encode to "p" tag name).
+		- `NOSTR_tagged` - a protocol that builds upon the concepts of `NOSTR_tag`. however, `NOSTR_tagged` statically links the tag name to each instance of the type. this is useful for "tentpole" structures such as public keys (which ALWAYS encode to "p" tag name).
 
 		These two protocol expressions extend and constrain themselves around the given three sub-procols
 
 		- `NOSTR_tag_name` - expresses a tag name for an instance ("p", "e", even "challenge" or whatever)
+
 		- `NOSTR_tag_index` - the index value for a given tag instance (and the name attached to it). for "e", this would be the hex-encoded value of the event UID.
+		
 		- `NOSTR_tag_addlfield` - any interpretation of data that may come after the index value of the tag.
 
 - Deprication of Key typealiases for two explicit Key variants: `PublicKey` and `SecretKey` each with slightly different supported protocols.
 
+	- `PublicKey` is `NOSTR_tagged` (a great example of where protocol `NOSTR_tagged` is more apropriate than the alternative that isn't strictly tied to a type: `NOSTR_tag`)
+
+- Broke ground on a new `NOSTR_bech32` protocol for seamless integration with this complex encoding scheme. Still much work to do on this.
+
 - Renamed a func or two in `struct Date` for better consistency with other functions in the struct.
 
-- Replaced signature `String` in `nostr.Event` with more compact `Signature` struct. Occupies only 64 bytes of memory.
+- Replaced signature `String` in `nostr.Event` with more compact `Signature` struct. Occupies half the size in memory.
 
 	- Conforms to the common string-based protocols to ensure accessible string encodings.
+
+- A ton of small changes.
 
 ## v0.3.3
 

@@ -14,28 +14,10 @@ import RAW
 
 	// initialize a null structure
 	internal init() {}
+}
 
-	/// initialize a key from an npub encoded string
-	/// - parameter npub: the npub encoded string to decode
-	public init(npub:String) throws {
-		let decoded = try Bech32.decode(npub)
-		guard decoded.hrp.lowercased() == "npub" else {
-			throw Error.invalidBech32HRP(decoded.hrp)
-		}
-		guard decoded.data.count == MemoryLayout<Self>.size else {
-			throw Error.invalidBech32DataLength(decoded.data.count)
-		}
-		self = decoded.data.asRAW_val { rawVal in 
-			return Self.init(rawVal)! /* this is safe because length has already been validated */
-		}
-	}
-
-	/// returns the bech32 encoded public key representation of this key
-	public func npubString() -> String {
-		return self.asRAW_val({ rawVal in
-			return Bech32.encode(hrp:"npub", rawVal)
-		})
-	}
+extension PublicKey:NOSTR_bech32_raw {
+    public static let NOSTR_bech32_hrp = "npub"
 }
 
 extension PublicKey:RAW_convertible {
@@ -62,7 +44,7 @@ extension PublicKey:RAW_comparable {
 		let aData = a!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
 		let bData = b!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
 		
-		let minLength = min(a!.pointee.mv_size, b!.pointee.mv_size)
+		let minLength = Swift.min(a!.pointee.mv_size, b!.pointee.mv_size)
 		let comparisonResult = memcmp(aData, bData, minLength)
 
 		if comparisonResult != 0 {
@@ -74,13 +56,12 @@ extension PublicKey:RAW_comparable {
 	}
 }
 
+/// hex implementation
 extension PublicKey:HEX_convertible {
-	public var hexEncodedString:String {
-		get {
-			self.asRAW_val({
-				return Hex.encode($0, lowercaseOutput:true)
-			})
-		}
+	public func hexEncodedString() -> String {
+		self.asRAW_val({
+			return Hex.encode($0, lowercaseOutput:true)
+		})
 	}
 
 	public init(hexEncodedString: String) throws {
@@ -96,13 +77,13 @@ extension PublicKey:HEX_convertible {
 }
 
 /// LosslessStringConvertible conformance 
-/// - based on a hex-encoded representation of the key bytes
 extension PublicKey:CustomStringConvertible {
 	/// implements a hex-encoded representation of the key bytes
 	public var description:String {
-		return self.hexEncodedString
+		return self.hexEncodedString()
 	}
 }
+
 
 extension PublicKey:Codable {
 	// decode implementation
@@ -114,7 +95,7 @@ extension PublicKey:Codable {
 	// encode implementation
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(self.hexEncodedString)
+		try container.encode(self.hexEncodedString())
 	}
 }
 
@@ -162,20 +143,28 @@ extension PublicKey {
 }
 
 extension PublicKey:NOSTR_tagged {
+	public init(NOSTR_tag_index: String, NOSTR_tag_addlfields: [any NOSTR_tag_addlfield]) throws {
+		self = try Self(hexEncodedString: NOSTR_tag_index)
+	}
 
-    public init(NOSTR_tag_index: String, NOSTR_tag_addlfields: [any NOSTR_tag_addlfield]) throws {
-        self = try Self(hexEncodedString: NOSTR_tag_index)
-    }
+	public static var NOSTR_tagged_name:Event.Tag.Name {
+		return "p"
+	}
 
-    public static var NOSTR_tagged_name:Event.Tag.Name {
-        return "p"
-    }
+	public var NOSTR_tag_indexfield:String {
+		return self.hexEncodedString()
+	}
 
-    public var NOSTR_tag_indexfield:String {
-        return self.hexEncodedString
-    }
+	public var NOSTR_tag_addlfields: [any NOSTR_tag_addlfield] {
+		return []
+	}
+}
 
-    public var NOSTR_tag_addlfields: [any NOSTR_tag_addlfield] {
-        return []
-    }
+extension PublicKey {
+	public init(npubString:String) throws {
+		self = try Self(NOSTR_bech32:npubString)
+	}
+	public func npubString() -> String {
+		return self.NOSTR_bech32()
+	}
 }

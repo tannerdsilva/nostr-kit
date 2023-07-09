@@ -42,6 +42,7 @@ let package = Package(
 			name: "nostr",
 			dependencies:nostrTargetDeps
 		),
+		.target(name:"cnostr"),
 		.executableTarget(name: "nostr-cc", dependencies:[
 			"nostr", 
 			.product(name:"ArgumentParser", package:"swift-argument-parser")

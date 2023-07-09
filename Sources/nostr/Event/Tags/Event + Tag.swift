@@ -31,23 +31,23 @@ extension Event {
 
 extension Event.Tag:NOSTR_tag {
 	/// the type of tag.
-	public typealias NOSTR_tag_namefield_TYPE = Event.Tag.Name
+	public typealias NOSTR_tag_name_TYPE = Event.Tag.Name
 	/// additional info associated with the tag
-	public typealias NOSTR_tag_indexfield_TYPE = String
+	public typealias NOSTR_tag_index_TYPE = String
 
 	/// initialize from a tag name and tag info
-	public init(NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE, NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws {
-		self.name = NOSTR_tag_namefield
-		self.index = NOSTR_tag_indexfield
+	public init(NOSTR_tag_name:NOSTR_tag_name_TYPE, NOSTR_tag_index:NOSTR_tag_index_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws {
+		self.name = NOSTR_tag_name
+		self.index = NOSTR_tag_index
 		self.additionalInfo = NOSTR_tag_addlfields.map { $0.NOSTR_tag_addlfield }
 	}
 
 	/// the type of tag.
-	public var NOSTR_tag_namefield:NOSTR_tag_namefield_TYPE {
+	public var NOSTR_tag_namefield:NOSTR_tag_name_TYPE {
 		return self.name
 	}
 	/// additional info associated with the tag
-	public var NOSTR_tag_indexfield:NOSTR_tag_indexfield_TYPE {
+	public var NOSTR_tag_indexfield:NOSTR_tag_index_TYPE {
 		return self.index
 	}
 	/// additional info associated with the tag

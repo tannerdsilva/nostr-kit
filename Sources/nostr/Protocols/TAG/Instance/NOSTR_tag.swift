@@ -1,17 +1,25 @@
-public protocol NOSTR_tag:ExpressibleByArrayLiteral, Codable, Collection where Element == String, ArrayLiteralType == String {
-	associatedtype Element = String // element must be string literal since any of the sub protocols that can be found in the body of this type
+/// allows an instance of a specific Swift type to convey itself explicitly as a tag instance.
+public protocol NOSTR_tag:ExpressibleByArrayLiteral, Decodable, Encodable, Collection where Element == String, ArrayLiteralType == String {
+	associatedtype Element = String // element must be string literal since any of the sub protocols that can be found in the body of this type.
 	associatedtype ArrayLiteralType = String
 	
 	associatedtype NOSTR_tag_name_TYPE:NOSTR_tag_name = nostr.Event.Tag.Name
 	associatedtype NOSTR_tag_index_TYPE:NOSTR_tag_index = String
 
+	/// the instance variable that represents the name for this tag instance.
 	var NOSTR_tag_namefield:NOSTR_tag_name_TYPE { get }
+
+	/// the instance variable that represents the index value for this tag instance.
 	var NOSTR_tag_indexfield:NOSTR_tag_index_TYPE { get }
+
+	/// the instance variable that represents any additional values for this intance. 
 	var NOSTR_tag_addlfields:[any NOSTR_tag_addlfield] { get }
 
+	/// initialize a tag from given values of their specific name, index, and (optionally) additional types.
 	init(NOSTR_tag_name:NOSTR_tag_name_TYPE, NOSTR_tag_index:NOSTR_tag_index_TYPE, NOSTR_tag_addlfields:[any NOSTR_tag_addlfield]) throws
 }
 
+// array will implement the NOSTR_tag protocol if its element type is a string. it is assumed that the first element is of nonzero length and the second value exists.
 extension Array:NOSTR_tag where Element == String {
 	public init(NOSTR_tag_name: String, NOSTR_tag_index: String, NOSTR_tag_addlfields: [any NOSTR_tag_addlfield]) throws {
 		var buildArray = [String]()

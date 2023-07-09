@@ -60,7 +60,7 @@ extension Event.UID:HEX_convertible {
 		})
 		self = makeSelf
 	}
-	public var hexEncodedString: String {
+	public func hexEncodedString() -> String {
 		self.asRAW_val { rval in
 			return Hex.encode(rval, lowercaseOutput:true)
 		}
@@ -70,7 +70,7 @@ extension Event.UID:HEX_convertible {
 /// LosslessStringConvertible conformance
 extension Event.UID:CustomStringConvertible {
 	public var description: String {
-		return self.hexEncodedString
+		return self.hexEncodedString()
 	}
 }
 
@@ -84,7 +84,7 @@ extension Event.UID:Codable {
 	}
 	public func encode(to encoder: Encoder) throws {
 		var container = encoder.singleValueContainer()
-		try container.encode(self.hexEncodedString)
+		try container.encode(self.hexEncodedString())
 	}
 }
 
