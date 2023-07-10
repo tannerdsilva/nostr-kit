@@ -25,6 +25,7 @@ extension NOSTR_bech32_raw {
 			return Self.init(rawVal)! /* this is safe because length has already been validated */
 		}
 	}
+	/// returns the bech32 encoded string representation of the raw value.
 	public func NOSTR_bech32() -> String {
 		return self.asRAW_val({ rawVal in
 			return Bech32.encode(hrp:Self.NOSTR_bech32_hrp, rawVal)

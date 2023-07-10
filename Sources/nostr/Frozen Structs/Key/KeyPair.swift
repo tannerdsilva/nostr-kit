@@ -19,10 +19,10 @@ extension KeyPair {
 /// a pairing of public and private keys.
 @frozen public struct KeyPair {
 	/// public key of the keypair
-	public let pubkey:PublicKey
+	public let publicKey:PublicKey
 	
 	/// private key of the keypair
-	public let seckey:SecretKey
+	public let secretKey:SecretKey
 
 	/// initialize a keypair from an existing secret key.
 	/// - throws: `KeyPair.Errow.invalidSecretKey` if the secret key is invalid
@@ -39,17 +39,17 @@ extension KeyPair {
 				}
 				return (pubkey, secK)
 			}
-			self.pubkey = getKeys.0
-			self.seckey = getKeys.1
+			self.publicKey = getKeys.0
+			self.secretKey = getKeys.1
 		} catch {
 			throw KeyPair.Errow.invalidSecretKey
 		}
 	}
 	
 	/// initialize a keypair from an existing public and private key pair
-	public init(pubkey:PublicKey, seckey:SecretKey) {
-		self.pubkey = pubkey
-		self.seckey = seckey
+	public init(publicKey:PublicKey, secretKey:SecretKey) {
+		self.publicKey = publicKey
+		self.secretKey = secretKey
 	}
 
 	/// generate a new keypair
@@ -61,7 +61,7 @@ extension KeyPair {
 		let pubKey = genesis.publicKey.xonly.bytes.asRAW_val({ keyVal in
 			return PublicKey(keyVal)!
 		})
-		return KeyPair(pubkey:pubKey, seckey:privKey)
+		return KeyPair(publicKey:pubKey, secretKey:privKey)
 	}
 }
 
@@ -105,12 +105,12 @@ extension KeyPair:Codable {
 		let container = try decoder.container(keyedBy:CodingKeys.self)
 		let pubkey = try container.decode(PublicKey.self, forKey:.pubkey)
 		let seckey = try container.decode(SecretKey.self, forKey:.seckey)
-		self.init(pubkey:pubkey, seckey:seckey)
+		self.init(publicKey:pubkey, secretKey:seckey)
 	}
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.container(keyedBy:CodingKeys.self)
-		try container.encode(self.pubkey, forKey:.pubkey)
-		try container.encode(self.seckey, forKey:.seckey)
+		try container.encode(self.publicKey, forKey:.pubkey)
+		try container.encode(self.secretKey, forKey:.seckey)
 	}
 }
 

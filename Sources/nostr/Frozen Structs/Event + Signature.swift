@@ -1,20 +1,17 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-	import Glibc
-#else
-	import Darwin.C
-#endif
-
 import RAW
+import cnostr
 
 extension Event {
+	/// defines the 64 byte signature of a nostr event.
 	@frozen public struct Signature {
 		// 64 byte static buffer
 		internal var bytes:(UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	}
 }
 
+/// the event UID is codable by way of its hex encoded string value.
 extension Event.Signature:Codable {
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.singleValueContainer()
@@ -27,6 +24,7 @@ extension Event.Signature:Codable {
 	}
 }
 
+/// the event signature is RAW convertible
 extension Event.Signature:RAW_convertible {
 	public init?(_ value:RAW_val) {
 		guard value.mv_size == MemoryLayout<Self>.size else {
@@ -58,6 +56,7 @@ extension Event.Signature:RAW_comparable {
 	}
 }
 
+/// implements the HEX_convertible protocol
 extension Event.Signature:HEX_convertible {
 	public init(hexEncodedString: String) throws {
 		let decoded = try Hex.decode(hexEncodedString)

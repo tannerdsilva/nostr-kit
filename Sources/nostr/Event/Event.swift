@@ -26,38 +26,6 @@ public struct Event {
 	public init() {}
 }
 
-/// Codable conformance
-extension nostr.Event:Codable {
-	/// initialize using a standard swift decoder
-	public init(from decoder:Swift.Decoder) throws {
-		let container = try decoder.container(keyedBy: CodingKeys.self)
-		self.uid = try container.decode(UID.self, forKey: .uid)
-		self.sig = try container.decode(Signature.self, forKey: .sig)
-		self.tags = try container.decode([Event.Tag].self, forKey: .tags)
-		self.pubkey = try container.decode(PublicKey.self, forKey: .pubkey)
-		self.created = try container.decode(Date.self, forKey: .created)
-		self.kind = Kind(rawValue:try container.decode(Int.self, forKey: .kind))!
-		self.content = try container.decode(String.self, forKey: .content)
-	}
-
-	/// export to a standard swift encoder
-	public func encode(to encoder:Swift.Encoder) throws {
-		var container = encoder.container(keyedBy: CodingKeys.self)
-		try container.encode(uid, forKey: .uid)
-		try container.encode(sig, forKey: .sig)
-		var nestedKeyedContainer = container.nestedUnkeyedContainer(forKey: .tags)
-		
-		for tag in tags {
-			try nestedKeyedContainer.encode(tag)
-		}
-		
-		try container.encode(pubkey, forKey: .pubkey)
-		try container.encode(created, forKey: .created)
-		try container.encode(kind.rawValue, forKey: .kind)
-		try container.encode(content, forKey: .content)
-	}
-}
-
 extension nostr.Event {
 	fileprivate func commitment() -> [UInt8] {
 		let encoder = QuickJSON.Encoder()
@@ -124,13 +92,17 @@ extension nostr.Event {
 	}
 }
 
-// coding keys for nostr.Event
-fileprivate enum CodingKeys:String, CodingKey {
-	case uid = "id"
-	case sig = "sig"
-	case tags = "tags"
-	case pubkey = "pubkey"
-	case created = "created_at"
-	case kind = "kind"
-	case content = "content"
+/// coding keys for nostr.Event
+extension nostr.Event {
+	
+	/// the standard coding keys for the event
+	internal enum CodingKeys:String, CodingKey {
+		case uid = "id"
+		case sig = "sig"
+		case tags = "tags"
+		case author = "pubkey"
+		case date = "created_at"
+		case kind = "kind"
+		case content = "content"
+	}
 }
