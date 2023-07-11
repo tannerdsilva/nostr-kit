@@ -7,5 +7,5 @@ public protocol NOSTR_date {
 	init(NOSTR_date_unixInterval:UInt64)
 
 	/// initialize with the current time
-	init()
+	static func currentTime() -> Self
 }

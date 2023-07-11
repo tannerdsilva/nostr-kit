@@ -1,6 +1,9 @@
-public protocol NOSTR_filter {
+// (c) tanner silva 2023. all rights reserved.
 
+public protocol NOSTR_filter {
+	/// the kind type that is used for the event
 	associatedtype NOSTR_filter_kind_TYPE:NOSTR_kind
+	/// the date type that is used for the event
 	associatedtype NOSTR_filter_date_TYPE:NOSTR_date
 	
 	/// event uids to filter by

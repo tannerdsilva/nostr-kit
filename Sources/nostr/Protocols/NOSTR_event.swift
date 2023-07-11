@@ -1,23 +1,48 @@
-import QuickJSON
+// (c) tanner silva 2023. all rights reserved.
 
-public protocol NOSTR_event_unsigned {
+// used to generate json commitments
+import class QuickJSON.Encoder
+// used to compute the sha256 hash of the commitment
+import struct Crypto.SHA256
+// used to generate the event signature
+import secp256k1
+
+import RAW
+
+public protocol NOSTR_event {
 	/// the date type that is used for the event
 	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
 	/// the event kind type that is used for the event
 	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
 
+	/// type for unsigned events
+	associatedtype NOSTR_event_unsigned_TYPE:NOSTR_event_unsigned where NOSTR_event_unsigned_TYPE.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, NOSTR_event_unsigned_TYPE.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
+	/// type for signed events
+	associatedtype NOSTR_event_signed_TYPE:NOSTR_event_signed = nostr.Event where NOSTR_event_signed_TYPE.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, NOSTR_event_signed_TYPE.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
+
+	/// sign an unsigned event with the given keypair
+	func sign(event unsigned:inout NOSTR_event_unsigned_TYPE, with keypair:KeyPair) throws -> NOSTR_event_signed_TYPE
+}
+
+public protocol NOSTR_event_unsigned {
+	associatedtype NOSTR_event_date_TYPE:NOSTR_date
+	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind
+
 	/// the date when the event was created. this value may be nil if the intent is to date this event when it is signed
-	var date:NOSTR_date? { get }
+	var date:NOSTR_event_date_TYPE? { get set }
 	/// the tags attached to the event
-	var tags:Array<any NOSTR_tag> { get }
+	var tags:Array<any NOSTR_tag> { get set }
 	/// the kind of event
-	var kind:NOSTR_event_kind_TYPE { get }
+	var kind:NOSTR_event_kind_TYPE { get set }
 	/// the content of the event
-	var content:String { get }
+	var content:String { get set }
 }
 
 /// a protocol for expressing a complete nostr event.
-public protocol NOSTR_event_signed:Codable, NOSTR_event_unsigned {
+public protocol NOSTR_event_signed:Codable {
+	associatedtype NOSTR_event_date_TYPE:NOSTR_date
+	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind
+
 	/// the unique identifier for the event
 	var uid:Event.UID { get }
 	/// the cryptographic signature for the event
@@ -33,54 +58,45 @@ public protocol NOSTR_event_signed:Codable, NOSTR_event_unsigned {
 	/// the content of the event
 	var content:String { get }
 
-	/// initialize a new instance of the signed event based on the given parameters
+	/// initialize a new instance of the signed event based on the given parameters.
+	/// - required implementation provided
 	init(uid:Event.UID, sig:Event.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
+		
 	/// returns true if the event is cryptographically valid. otherwise, will return false.
+	/// - default implementation provided
 	func isValid() -> Bool
 }
 
-extension NOSTR_event_signed {
-	init<U>(unsigned:U, author:KeyPair) throws where U:NOSTR_event_unsigned, U.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
-		let eventEncoder = QuickJSON.Encoder()
-		let tagsString = String(bytes:try eventEncoder.encode(unsigned.tags.compactMap { Array($0) }), encoding:.utf8)
-		let contentString = String(bytes:try eventEncoder.encode(unsigned.content), encoding:.utf8)
-		let writeDate = unsigned.date ?? NOSTR_event_date_TYPE()
-		let commitment = "[0,\"\(author.publicKey.hexEncodedString)\",\(Int64(writeDate.timeIntervalSinceUnixDate())),\(unsigned.kind.rawValue),\(tagsString!),\(contentString!)]"
-	}
-}
+extension NOSTR_event {
+	func sign(event unsigned:inout NOSTR_event_unsigned_TYPE, with author:KeyPair) throws -> NOSTR_event_signed_TYPE {		/// generate the commitment bytes
+		let encoder = QuickJSON.Encoder()
+		let commit = Event.Commitment(&unsigned, author:author)
+		let commitmentBytes = try encoder.encode(commit)
 
-/// implement Codable conformance
-extension NOSTR_event_signed {
-	/// encode implementation
-	public func encode(to encoder:Encoder) throws {
-		var container = encoder.container(keyedBy:Event.CodingKeys.self)
-		try container.encode(uid, forKey:.uid)
-		try container.encode(sig, forKey:.sig)
-		var nestedUnkeyedContainer = container.nestedUnkeyedContainer(forKey:.tags)
-		for curTag in tags {
-			try nestedUnkeyedContainer.encode(curTag)
+		/// generate the uid based on the commitment
+		var hasher = SHA256()
+		let bytes = commitmentBytes.asRAW_val { commitmentVal in
+			let asBuff = UnsafeRawBufferPointer(start:commitmentVal.mv_data, count:commitmentVal.mv_size)
+			hasher.update(bufferPointer:asBuff)
+			return hasher.finalize()
 		}
-		try container.encode(author, forKey: .author)
-		try container.encode(date.NOSTR_date_unixInterval, forKey:.date)
-		try container.encode(kind, forKey: .kind)
-		try container.encode(content, forKey: .content)
-	}
+		let makeUID = bytes.withUnsafeBytes { bytesHash in
+			let asRAW = RAW_val(mv_size:bytesHash.count, mv_data:UnsafeMutableRawPointer(mutating: bytesHash.baseAddress!))
+			return Event.UID(asRAW)!
+		}
 
-	/// decode implementation
-	public init(from decoder:Decoder) throws {
-		let container = try decoder.container(keyedBy:Event.CodingKeys.self)
-		let getUID = try container.decode(Event.UID.self, forKey:.uid)
-		let getSig = try container.decode(Event.Signature.self, forKey:.sig)
-		var tagsContainer = try container.nestedUnkeyedContainer(forKey:.tags)
-		var buildTags = Event.Tags()
-		while !tagsContainer.isAtEnd {
-			let curTag = try tagsContainer.decode(Event.Tag.self)
-			buildTags.append(curTag)
-		}
-		let getAuthor = try container.decode(PublicKey.self, forKey:.author)
-		let getDate = try container.decode(UInt64.self, forKey:.date)
-		let getKind = try container.decode(NOSTR_event_kind_TYPE.self, forKey:.kind)
-		let getContent = try container.decode(String.self, forKey:.content)
-		try self.init(uid:getUID, sig:getSig, tags:buildTags, pubkey:getAuthor, created:NOSTR_event_date_TYPE(NOSTR_date_unixInterval:getDate), kind:getKind, content:getContent)
+		let keyBytes = author.secretKey.asRAW_val({ rawVal in
+			return Array(rawVal)
+		})
+		let key = try secp256k1.Signing.PrivateKey(rawRepresentation:keyBytes)
+		var aux_rand = try RandomBytes.generate(size: 64)
+		var digest = makeUID.asRAW_val({
+			return Array($0)
+		})
+		let signature = try key.schnorr.signature(message:&digest, auxiliaryRand:&aux_rand)
+		let makeSig = signature.rawRepresentation.bytes.asRAW_val({ inputVal in
+			return Event.Signature(inputVal)!
+		})
+		return try NOSTR_event_signed_TYPE(uid:makeUID, sig:makeSig, tags:unsigned.tags, author:author.publicKey, date:unsigned.date!, kind:unsigned.kind, content:unsigned.content)
 	}
 }
