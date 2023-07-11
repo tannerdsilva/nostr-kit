@@ -10,8 +10,8 @@ import secp256k1
 import RAW
 
 public protocol NOSTR_event_unsigned {
-	associatedtype NOSTR_event_date_TYPE:NOSTR_date
-	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind
+	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
+	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
 
 	/// the date when the event was created. this value may be nil if the intent is to date this event when it is signed
 	var date:NOSTR_event_date_TYPE? { get set }
@@ -30,8 +30,8 @@ public protocol NOSTR_event_unsigned {
 
 /// a protocol for expressing a complete nostr event.
 public protocol NOSTR_event_signed:Codable {
-	associatedtype NOSTR_event_date_TYPE:NOSTR_date
-	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind
+	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
+	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
 
 	/// the unique identifier for the event
 	var uid:Event.Signed.UID { get }
@@ -91,7 +91,6 @@ extension NOSTR_event_unsigned {
 		let encoder = QuickJSON.Encoder()
 		let commit = Event.Commitment(unsigned:&self, author:author)
 		let commitmentBytes = try encoder.encode(commit)
-		fatalError("\(String(bytes:commitmentBytes, encoding:.utf8) ?? "nil")")
 		
 		// generate the uid based on the commitment
 		var hasher = SHA256()

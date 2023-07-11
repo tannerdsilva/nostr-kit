@@ -6,9 +6,10 @@ class EventTests: XCTestCase {
 
 	func testGenerateUID() throws {
 		var usEvent = Event.Unsigned(kind:.text_note)
+		usEvent.date = Date(unixInterval: 1700)
 		usEvent.content = "Test content"
 		let event = try usEvent.sign(to:Event.Signed.self, as:EventTests.keyPair)
-		let uidString = event.uid.description
+		let uidString = event.uid.hexEncodedString()
 		XCTAssertEqual(uidString, "14550304c8f98a7dfd9918f06fb8387f471359e7117861f0cfc4868ee7212368")
 	}
 	func testEventSignatureValidation() throws {
