@@ -6,7 +6,7 @@ import RAW
 extension Event {
 
 	/// represents the various Kinds of events that may be handled
-	public enum Kind:Int, Equatable, Codable, Hashable {
+	public enum Kind:UInt64, Equatable, Comparable, Codable, Hashable, NOSTR_kind {
 		case metadata = 0
 		case text_note = 1
 		case recommended_relay = 2
@@ -23,24 +23,10 @@ extension Event {
 		case list_categorized = 30000
 		case list_categorized_bookmarks = 30001
 	}
-	
 }
 
-/// RAW_convertible conformance
-extension Event.Kind:RAW_convertible {		
-	public init?(_ value:RAW_val) {
-		guard MemoryLayout<Int>.size == value.mv_size else {
-			return nil
-		}
-		guard let asSelf = Self(rawValue:value.mv_data.bindMemory(to:Int.self, capacity:1).pointee) else {
-			return nil
-		}
-		self = asSelf
-	}
-	public func asRAW_val<R>(_ valFunc:(inout RAW_val) throws -> R) rethrows -> R {
-		return try withUnsafePointer(to:self.rawValue) { rawVal in
-			var val = RAW_val(mv_size:MemoryLayout<Int>.size, mv_data:UnsafeMutableRawPointer(mutating: rawVal))
-			return try valFunc(&val)
-		}
+extension Event.Kind {
+	public static func < (lhs:Event.Kind, rhs:Event.Kind) -> Bool {
+		return lhs.rawValue < rhs.rawValue
 	}
 }

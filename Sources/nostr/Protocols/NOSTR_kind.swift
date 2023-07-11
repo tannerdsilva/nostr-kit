@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
 /// a protocol for types that can be used as a kind for an event.
-public protocol NOSTR_kind:Hashable, Equatable, Comparable, BinaryInteger, Codable {}
+public protocol NOSTR_kind:Hashable, Equatable, Comparable, Codable {}
 
 /// any unsigned integer can be used as a nostr kind
 extension UInt:NOSTR_kind {}

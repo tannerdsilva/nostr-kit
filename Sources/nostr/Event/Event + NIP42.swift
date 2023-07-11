@@ -8,6 +8,6 @@ extension Event {
 			["challenge", "\(challenge)"],
 			["relay", "\(relay.description)"],
 		]
-		return authEvent.sign(to:nostr.Event.Signed.self, using:keypair)
+		return try authEvent.sign(to:nostr.Event.Signed.self, as:keypair)
 	}
 }
