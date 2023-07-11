@@ -1,7 +1,5 @@
 // (c) tanner silva 2023. all rights reserved.
 
-import cnostr
-
 // event tag
 extension Event {
 	/// an event tag. used to attach various reference types and schemes to events.
