@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 extension Event.Tag {
 	/// captures the two types of event tags that require a practical distinction in nostr.
 	/// for more info as to why this is necessary, see the NIP-12 proposal.

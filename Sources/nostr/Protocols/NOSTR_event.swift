@@ -68,7 +68,8 @@ public protocol NOSTR_event_signed:Codable {
 }
 
 extension NOSTR_event {
-	func sign(event unsigned:inout NOSTR_event_unsigned_TYPE, with author:KeyPair) throws -> NOSTR_event_signed_TYPE {		/// generate the commitment bytes
+	func sign(event unsigned:inout NOSTR_event_unsigned_TYPE, with author:KeyPair) throws -> NOSTR_event_signed_TYPE {
+		/// generate the commitment bytes
 		let encoder = QuickJSON.Encoder()
 		let commit = Event.Commitment(&unsigned, author:author)
 		let commitmentBytes = try encoder.encode(commit)

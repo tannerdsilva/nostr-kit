@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 extension Event {
 
 	/// a struct used to represent a commitment to an event. this is a crucial tool used for signing events.

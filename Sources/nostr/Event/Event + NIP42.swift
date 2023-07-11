@@ -7,9 +7,9 @@ extension Event {
 			["challenge", "\(challenge)"],
 			["relay", "\(relay.description)"],
 		]
-		authEvent.pubkey = keypair.pubkey
+		authEvent.pubkey = keypair.publicKey
 		try authEvent.computeUID()
-		try authEvent.sign(keypair.seckey)
+		try authEvent.sign(keypair.secretKey)
 		return authEvent
 	}
 }
