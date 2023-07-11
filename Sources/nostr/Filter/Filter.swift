@@ -79,10 +79,10 @@ extension Filter:Codable {
 			try container.encode(kinds, forKey: .kinds)
 		}
 		if self.since != nil {
-			try container.encode(since, forKey: .since)
+			try container.encode(since!.NOSTR_date_unixInterval, forKey: .since)
 		}
 		if self.until != nil {
-			try container.encode(until, forKey: .until)
+			try container.encode(until!.NOSTR_date_unixInterval, forKey: .until)
 		}
 		if self.authors != nil {
 			try container.encode(authors, forKey: .authors)

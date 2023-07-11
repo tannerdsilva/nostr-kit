@@ -1,12 +1,7 @@
 import struct NIOCore.TimeAmount
-
 import struct NIOSSL.TLSConfiguration
 
-#if os(Linux)
-import struct Glibc.size_t
-#else
-import struct Darwin.C.size_t
-#endif
+import cnostr
 
 extension Relay {
 	/// a conceptual namespace for client related types

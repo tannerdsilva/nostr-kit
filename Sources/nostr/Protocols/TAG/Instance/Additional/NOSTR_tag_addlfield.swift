@@ -1,9 +1,4 @@
-/*
-
-	["e", <32-bytes hex of the id of another event>, <recommended relay URL>]
-	["p", <32-bytes hex of a pubkey>, <recommended relay URL>]
-
-*/
+// (c) tanner silva 2023. all rights reserved.
 
 public protocol NOSTR_tag_addlfield:ExpressibleByStringLiteral {
 	/// represents the nostr tag name as a string representation.

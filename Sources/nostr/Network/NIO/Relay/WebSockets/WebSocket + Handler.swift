@@ -4,11 +4,7 @@ import NIOCore
 import NIOWebSocket
 import Logging
 
-#if os(macOS)
-import struct Darwin.size_t
-#elseif os(Linux)
-import struct Glibc.size_t
-#endif
+import cnostr
 
 extension WebSocket {
 	

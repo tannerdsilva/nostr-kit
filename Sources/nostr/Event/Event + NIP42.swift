@@ -1,15 +1,13 @@
+// (c) tanner silva 2023. all rights reserved.
+
 extension Event {
-	internal static func nip42Assertion(to challenge:String, from relay:Relay.URL, using keypair:KeyPair) throws -> nostr.Event {
-		var authEvent = nostr.Event()
+	internal static func nip42Assertion(to challenge:String, from relay:Relay.URL, using keypair:KeyPair) throws -> nostr.Event.Signed {
+		var authEvent = nostr.Event.Unsigned()
 		authEvent.kind = .auth_response
-		authEvent.created = Date()
 		authEvent.tags = [
 			["challenge", "\(challenge)"],
 			["relay", "\(relay.description)"],
 		]
-		authEvent.pubkey = keypair.publicKey
-		try authEvent.computeUID()
-		try authEvent.sign(keypair.secretKey)
-		return authEvent
+		return authEvent.sign(to:nostr.Event.Signed.self, using:keypair)
 	}
 }

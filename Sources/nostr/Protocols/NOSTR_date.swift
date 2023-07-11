@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 /// a protocol for types that represent a date
 public protocol NOSTR_date {
 	/// the date as a unix timestamp

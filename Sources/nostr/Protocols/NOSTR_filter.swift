@@ -7,7 +7,7 @@ public protocol NOSTR_filter {
 	associatedtype NOSTR_filter_date_TYPE:NOSTR_date
 	
 	/// event uids to filter by
-	var uids:Set<Event.UID>? { get }
+	var uids:Set<Event.Signed.UID>? { get }
 
 	/// event kinds to filter by
 	var kinds:Set<NOSTR_filter_kind_TYPE>? { get }

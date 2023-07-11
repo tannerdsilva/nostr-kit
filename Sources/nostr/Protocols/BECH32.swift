@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import RAW
 
 /// a type definition for bech32 encoding. does not actually encode or decode anything, just provides a type definition for the encoding.

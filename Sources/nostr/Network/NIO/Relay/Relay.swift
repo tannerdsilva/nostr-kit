@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import NIOCore
 
 import struct NIOHTTP1.HTTPHeaders
@@ -28,7 +30,7 @@ public struct Relay {
 		self.catcher = catcher
 	}
 
-	public func write(event:nostr.Event) -> EventLoopFuture<Publishing> {
+	public func write(event:nostr.Event.Signed) -> EventLoopFuture<Publishing> {
 		let pubPromise = channel.eventLoop.makePromise(of:Publishing.self)
 		let publishing = Publishing(relay:self.url, event:event.uid.description, channel:channel)
 		self.handler.addPublishingStruct(publishing, for:event.uid, channel:self.channel).whenComplete({

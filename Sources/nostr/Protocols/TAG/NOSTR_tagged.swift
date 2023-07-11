@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 public protocol NOSTR_tagged:NOSTR_tag {
 	associatedtype Element = String // element must be string literal since any of the sub protocols that can be found in the body of this type
 	associatedtype ArrayLiteralType = String

@@ -1,6 +1,6 @@
 // (c) tanner silva 2023. all rights reserved.
 
-extension Event {
+extension Event.Unsigned {
 
 	/// a struct used to represent a commitment to an event. this is a crucial tool used for signing events.
 	public struct Commitment:Encodable {
@@ -29,7 +29,7 @@ extension Event {
 		public func encode(to encoder:Encoder) throws {
 			var container = encoder.unkeyedContainer()
 			try container.encode(0)
-			try container.encode(author)
+			try container.encode(author.hexEncodedString())
 			try container.encode(date.NOSTR_date_unixInterval)
 			try container.encode(kind)
 			var nestedUnkeyedContainer = container.nestedUnkeyedContainer()

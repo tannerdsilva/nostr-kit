@@ -1,10 +1,4 @@
-/// the discrete protocol for conveying nostr tag names.
-/// encodes to and from a string that represents the "tag name" and is encoded in the apropriate places where needed.
-/// - examples of tag names:
-/// 	- `#a`
-/// 	- `#p`
-/// 	- `relay`
-/// 	- `challenge`
+// (c) tanner silva 2023. all rights reserved.
 
 public protocol NOSTR_tag_name:ExpressibleByStringLiteral {
 	associatedtype NOSTR_tag_name_ERROR_zerolength:Swift.Error = nostr.Event.Tag.Name.ZeroLengthError

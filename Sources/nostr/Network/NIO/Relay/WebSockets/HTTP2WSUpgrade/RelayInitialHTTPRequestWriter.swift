@@ -2,8 +2,6 @@
 
 import NIOCore
 import NIOHTTP1
-import struct Foundation.URL
-
 
 extension WebSocket {
 

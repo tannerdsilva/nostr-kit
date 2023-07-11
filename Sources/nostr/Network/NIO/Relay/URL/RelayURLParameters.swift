@@ -1,3 +1,4 @@
+// (c) tanner silva 2023. all rights reserved.
 
 /// Store for parameters key, value pairs extracted from URI
 extension Relay.URL {

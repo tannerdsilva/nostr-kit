@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import RAW
 
 extension UnsafeRawBufferPointer:RAW_encodable {

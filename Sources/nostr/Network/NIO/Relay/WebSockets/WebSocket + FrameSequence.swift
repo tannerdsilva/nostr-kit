@@ -1,11 +1,9 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import NIOWebSocket
 import NIOCore
 
-#if os(Linux)
-import struct Glibc.size_t
-#elseif os(macOS)
-import struct Darwin.C.size_t
-#endif
+import cnostr
 
 extension WebSocket {
 		/// sequence of fragmented WebSocket frames. ``WebSocket.Handler`` uses this to combine fragmented frames into a single buffer

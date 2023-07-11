@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 public protocol NOSTR_tag_name_generic:NOSTR_tag_name where NOSTR_tag_namefield_TYPE == String {
 	associatedtype NOSTR_tag_namefield_TYPE = String
 	

@@ -1,11 +1,6 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-import Glibc
-#else
-import Darwin.C
-#endif
-
+import cnostr
 import RAW
 import secp256k1
 

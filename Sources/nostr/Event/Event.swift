@@ -7,26 +7,35 @@ import secp256k1
 
 /// the infamous nostr event. this is the core data structure that is used to represent all data in the nostr network.
 public struct Event {
-	/// the unique identifier for the event
-	public var uid:UID = UID()
-	/// the cryptographic signature for the event
-	public var sig:Signature = Signature()
-	/// the tags attached to the event
-	public var tags = Tags()
-	/// the author of the event
-	public var pubkey = PublicKey()
-	/// the creation date of the event
-	public var created = Date()
-	/// the kind of event
-	public var kind = Kind.text_note
-	/// the content of the event
-	public var content:String = ""
 
-	/// initialize a new event
-	public init() {}
+	/// represents an event whose contents are mutable prior to signing
+	public struct Unsigned:NOSTR_event_unsigned {
+		public var kind = Kind.text_note
+		public var tags:Tags = []
+		public var date:Date? = nil
+		public var content = ""
+	}
+	
+	/// represents an event whose contents are immutable after signing
+	public struct Signed:NOSTR_event_signed {
+		/// the unique identifier for the event
+		public let uid:UID = UID()
+		/// the cryptographic signature for the event
+		public let sig:Signature = Signature()
+		/// the tags attached to the event
+		public let tags = Tags()
+		/// the author of the event
+		public let pubkey = PublicKey()
+		/// the creation date of the event
+		public let created = Date()
+		/// the kind of event
+		public let kind = Kind.text_note
+		/// the content of the event
+		public let content:String = ""
+	}
 }
 
-extension nostr.Event {
+extension nostr.Event.Signed {
 	fileprivate func commitment() -> [UInt8] {
 		let encoder = QuickJSON.Encoder()
 		let tagsString = String(bytes:try! encoder.encode(tags.compactMap { Array($0) }), encoding:.utf8)!

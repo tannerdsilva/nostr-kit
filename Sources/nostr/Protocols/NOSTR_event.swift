@@ -9,21 +9,6 @@ import secp256k1
 
 import RAW
 
-public protocol NOSTR_event {
-	/// the date type that is used for the event
-	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
-	/// the event kind type that is used for the event
-	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
-
-	/// type for unsigned events
-	associatedtype NOSTR_event_unsigned_TYPE:NOSTR_event_unsigned where NOSTR_event_unsigned_TYPE.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, NOSTR_event_unsigned_TYPE.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
-	/// type for signed events
-	associatedtype NOSTR_event_signed_TYPE:NOSTR_event_signed = nostr.Event where NOSTR_event_signed_TYPE.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, NOSTR_event_signed_TYPE.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
-
-	/// sign an unsigned event with the given keypair
-	func sign(event unsigned:inout NOSTR_event_unsigned_TYPE, with keypair:KeyPair) throws -> NOSTR_event_signed_TYPE
-}
-
 public protocol NOSTR_event_unsigned {
 	associatedtype NOSTR_event_date_TYPE:NOSTR_date
 	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind
@@ -36,6 +21,11 @@ public protocol NOSTR_event_unsigned {
 	var kind:NOSTR_event_kind_TYPE { get set }
 	/// the content of the event
 	var content:String { get set }
+
+	/// initialize a new instance of the unsigned event based on the unsigned content of this instance and the given author.
+	/// this function will mutate the given unsigned event if its date is nil. a nil date is a convenience feature for developers to specify that the content should be dated at sign time.
+	/// - default implementation provided.
+	mutating func sign<S>(to signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
 }
 
 /// a protocol for expressing a complete nostr event.
@@ -44,7 +34,7 @@ public protocol NOSTR_event_signed:Codable {
 	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind
 
 	/// the unique identifier for the event
-	var uid:Event.UID { get }
+	var uid:Event.Signed.UID { get }
 	/// the cryptographic signature for the event
 	var sig:Event.Signature { get }
 	/// the tags attached to the event
@@ -60,18 +50,18 @@ public protocol NOSTR_event_signed:Codable {
 
 	/// initialize a new instance of the signed event based on the given parameters.
 	/// - required implementation provided
-	init(uid:Event.UID, sig:Event.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
-		
+	init(uid:Event.Signed.UID, sig:Event.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
+	
 	/// returns true if the event is cryptographically valid. otherwise, will return false.
 	/// - default implementation provided
 	func isValid() -> Bool
 }
 
-extension NOSTR_event {
-	func sign(event unsigned:inout NOSTR_event_unsigned_TYPE, with author:KeyPair) throws -> NOSTR_event_signed_TYPE {
+extension NOSTR_event_unsigned {
+	mutating func sign<S>(to signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
 		/// generate the commitment bytes
 		let encoder = QuickJSON.Encoder()
-		let commit = Event.Commitment(&unsigned, author:author)
+		let commit = Event.Unsigned.Commitment(&self, author:author)
 		let commitmentBytes = try encoder.encode(commit)
 
 		/// generate the uid based on the commitment
@@ -83,9 +73,8 @@ extension NOSTR_event {
 		}
 		let makeUID = bytes.withUnsafeBytes { bytesHash in
 			let asRAW = RAW_val(mv_size:bytesHash.count, mv_data:UnsafeMutableRawPointer(mutating: bytesHash.baseAddress!))
-			return Event.UID(asRAW)!
+			return Event.Signed.UID(asRAW)!
 		}
-
 		let keyBytes = author.secretKey.asRAW_val({ rawVal in
 			return Array(rawVal)
 		})
@@ -98,6 +87,6 @@ extension NOSTR_event {
 		let makeSig = signature.rawRepresentation.bytes.asRAW_val({ inputVal in
 			return Event.Signature(inputVal)!
 		})
-		return try NOSTR_event_signed_TYPE(uid:makeUID, sig:makeSig, tags:unsigned.tags, author:author.publicKey, date:unsigned.date!, kind:unsigned.kind, content:unsigned.content)
+		return try S(uid:makeUID, sig:makeSig, tags:tags, author:author.publicKey, date:date!, kind:kind, content:content)
 	}
 }
