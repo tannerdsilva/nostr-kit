@@ -1,3 +1,9 @@
+## v0.5.1
+
+- AES CBC 256 integrated natively into the project without dependencies.
+
+	- Unit tests included.
+
 ## v0.5.0
 
 - Cryptographic signing of the events are not handled natively by two primary event protocols.
