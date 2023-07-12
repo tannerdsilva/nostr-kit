@@ -48,5 +48,7 @@ public enum Error:Swift.Error {
 	case websocketUpgradeFailure
 
 	case invalidURL
+
+	case invalidPublicKey
 }
 
