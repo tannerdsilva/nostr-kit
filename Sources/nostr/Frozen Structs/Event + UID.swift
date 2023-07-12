@@ -1,14 +1,9 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-	import Glibc
-#else
-	import Darwin.C
-#endif
-
+import cnostr
 import RAW
 
-extension Event {
+extension Event.Signed {
 	/// a unique identifier for an event. represents the raw 32 byte value of the event UID.
 	@frozen public struct UID {
 		internal var bytes: (UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
@@ -16,7 +11,7 @@ extension Event {
 }
 
 /// RAW_convertible conformance
-extension Event.UID:RAW_convertible {
+extension Event.Signed.UID:RAW_convertible {
 	public init?(_ value:RAW_val) {
 		guard value.mv_size == MemoryLayout<Self>.size else {
 			return nil
@@ -32,7 +27,7 @@ extension Event.UID:RAW_convertible {
 }
 
 /// RAW_comparable conformance
-extension Event.UID:RAW_comparable {
+extension Event.Signed.UID:RAW_comparable {
 	public static let rawCompareFunction:@convention(c) (UnsafePointer<RAW_val>?, UnsafePointer<RAW_val>?) -> Int32 = { a, b in
 		let aData = a!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
 		let bData = b!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
@@ -49,7 +44,7 @@ extension Event.UID:RAW_comparable {
 	}
 }
 
-extension Event.UID:HEX_convertible {
+extension Event.Signed.UID:HEX_convertible {
 	public init(hexEncodedString: String) throws {
 		let decoded = try Hex.decode(hexEncodedString)
 		guard decoded.count == MemoryLayout<Self>.size else {
@@ -68,14 +63,14 @@ extension Event.UID:HEX_convertible {
 }
 
 /// LosslessStringConvertible conformance
-extension Event.UID:CustomStringConvertible {
+extension Event.Signed.UID:CustomStringConvertible {
 	public var description: String {
 		return self.hexEncodedString()
 	}
 }
 
 /// Codable conformance
-extension Event.UID:Codable {
+extension Event.Signed.UID:Codable {
 	public init(from decoder: Decoder) throws {
 		let container = try decoder.singleValueContainer()
 		let description = try container.decode(String.self)
@@ -89,8 +84,8 @@ extension Event.UID:Codable {
 }
 
 /// Hashable, Equatable, Comparable conformance
-extension Event.UID:Equatable, Hashable, Comparable {
-	public static func == (lhs: nostr.Event.UID, rhs: nostr.Event.UID) -> Bool {
+extension Event.Signed.UID:Equatable, Hashable, Comparable {
+	public static func == (lhs: nostr.Event.Signed.UID, rhs: nostr.Event.Signed.UID) -> Bool {
 		return lhs.asRAW_val({ lhsVal in
 			return rhs.asRAW_val({ rhsVal in
 				return Self.rawCompareFunction(&lhsVal, &rhsVal) == 0
@@ -98,7 +93,7 @@ extension Event.UID:Equatable, Hashable, Comparable {
 		})
 	}
 	
-	public static func < (lhs: nostr.Event.UID, rhs: nostr.Event.UID) -> Bool {
+	public static func < (lhs: nostr.Event.Signed.UID, rhs: nostr.Event.Signed.UID) -> Bool {
 		return lhs.asRAW_val({ lhsVal in
 			return rhs.asRAW_val({ rhsVal in
 				return Self.rawCompareFunction(&lhsVal, &rhsVal) < 0
@@ -113,7 +108,7 @@ extension Event.UID:Equatable, Hashable, Comparable {
 	}
 }
 
-extension Event.UID {
+extension Event.Signed.UID {
 	public enum Error: Swift.Error {
 		/// thrown when decoding using ``Decodable` protocol. specifically thrown when a string value is successfully extraced froma single value container, but the string could not be handled.
 		case encodedStringInvalid

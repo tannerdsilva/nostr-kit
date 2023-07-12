@@ -22,7 +22,7 @@ extension Relay {
 		/// - argument 1: the UID of the event that was acknowledged
 		/// - argument 2: whether or not the event was successfully published
 		/// - argument 3: a human readable message
-		case ok(Event.UID, Bool, String)
+		case ok(Event.Signed.UID, Bool, String)
 
 		/// an authentication challenge containing a challenge string.
 		/// - see nostr nip-42 for more information.
@@ -44,21 +44,21 @@ extension Relay.Message {
 		/// an event context used for writing.
 		/// - used by clients to write events to a relay.
 		/// - used by relays to parse events from clients.
-		case write(nostr.Event)
+		case write(nostr.Event.Signed)
 
 		/// a context used when an event corresponds to a subscription.
 		/// - used by clients to consume events from relays.
 		/// - used by relays to write requested events to clients.
-		case sub(String, nostr.Event)
+		case sub(String, nostr.Event.Signed)
 
 		/// initialize an event context from a partially parsed context
 		internal init(from container:inout UnkeyedDecodingContainer) throws {
 			switch container.count {
 				case 2:
-					self = .write(try container.decode(nostr.Event.self))
+					self = .write(try container.decode(nostr.Event.Signed.self))
 				case 3:
 					let subID = try container.decode(String.self)
-					let event = try container.decode(nostr.Event.self)
+					let event = try container.decode(nostr.Event.Signed.self)
 					self = .sub(subID, event)
 				default:
 					throw ParseError()
@@ -77,7 +77,7 @@ extension Relay.Message {
 		}
 
 		/// returns the enclosed event regardless of context
-		public func getEvent() -> nostr.Event {
+		public func getEvent() -> nostr.Event.Signed {
 			switch self {
 				case .write(let event):
 					return event
@@ -96,7 +96,7 @@ extension Relay.Message {
 
 		/// the assertion stage of the authentication scheme.
 		/// - argument 1: the signed authentication proof event
-		case assertion(nostr.Event)
+		case assertion(nostr.Event.Signed)
 	}
 }
 
@@ -144,14 +144,14 @@ extension Relay.Message:Codable {
 				} catch QuickJSON.Decoder.Error.valueTypeMismatch(let mismatchInfo) {
 					switch mismatchInfo.found {
 						case .obj:
-							let aResponse = try container.decode(nostr.Event.self)
+							let aResponse = try container.decode(nostr.Event.Signed.self)
 							self = .authentication(.assertion(aResponse))
 						default:
 							throw QuickJSON.Decoder.Error.valueTypeMismatch(mismatchInfo)
 					}
 				}
 			case "OK":
-				let proof = try container.decode(Event.UID.self)
+				let proof = try container.decode(Event.Signed.UID.self)
 				let didSucceed = try container.decode(Bool.self)
 				let message = try container.decode(String.self)
 				self = .ok(proof, didSucceed, message)

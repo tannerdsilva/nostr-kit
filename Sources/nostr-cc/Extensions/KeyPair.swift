@@ -9,9 +9,9 @@ extension KeyPair {
 		let pubString:String
 		switch hex {
 			case true:
-				pubString = pubkey.description
+				pubString = publicKey.hexEncodedString()
 			case false:
-				pubString = pubkey.npubString()
+				pubString = publicKey.npubString()
 		}
 		print(Colors.cyan("Public key:"), terminator:"")
 		print(" \(pubString)")
@@ -19,9 +19,9 @@ extension KeyPair {
 			print(Colors.red("Secret key:"), terminator:"")
 			switch hex {
 				case true:
-					print(" \(seckey.hexEncodedString)")
+					print(" \(secretKey.hexEncodedString)")
 				case false:
-					print(" \(seckey.nsecString())")
+					print(" \(secretKey.nsecString())")
 			}
 		}
 	}

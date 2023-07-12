@@ -1,21 +1,18 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-	import Glibc
-#else
-	import Darwin.C
-#endif
-
 import RAW
+import cnostr
 
-extension Event {
+extension Event.Signed {
+	/// defines the 64 byte signature of a nostr event.
 	@frozen public struct Signature {
 		// 64 byte static buffer
 		internal var bytes:(UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 	}
 }
 
-extension Event.Signature:Codable {
+/// the event UID is codable by way of its hex encoded string value.
+extension Event.Signed.Signature:Codable {
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.singleValueContainer()
 		let hexEncodedString = try container.decode(String.self)
@@ -27,7 +24,8 @@ extension Event.Signature:Codable {
 	}
 }
 
-extension Event.Signature:RAW_convertible {
+/// the event signature is RAW convertible
+extension Event.Signed.Signature:RAW_convertible {
 	public init?(_ value:RAW_val) {
 		guard value.mv_size == MemoryLayout<Self>.size else {
 			return nil
@@ -43,7 +41,7 @@ extension Event.Signature:RAW_convertible {
 }
 
 /// RAW_comparable conformance
-extension Event.Signature:RAW_comparable {
+extension Event.Signed.Signature:RAW_comparable {
 	public static let rawCompareFunction:@convention(c) (UnsafePointer<RAW_val>?, UnsafePointer<RAW_val>?) -> Int32 = { a, b in
 		let aData = a!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
 		let bData = b!.pointee.mv_data!.assumingMemoryBound(to: Self.self)
@@ -58,7 +56,8 @@ extension Event.Signature:RAW_comparable {
 	}
 }
 
-extension Event.Signature:HEX_convertible {
+/// implements the HEX_convertible protocol
+extension Event.Signed.Signature:HEX_convertible {
 	public init(hexEncodedString: String) throws {
 		let decoded = try Hex.decode(hexEncodedString)
 		guard decoded.count == MemoryLayout<Self>.size else {
@@ -76,7 +75,7 @@ extension Event.Signature:HEX_convertible {
 	}
 }
 
-extension Event.Signature {
+extension Event.Signed.Signature {
 	public enum Error: Swift.Error {
 		/// thrown when decoding using ``Decodable` protocol. specifically thrown when a string value is successfully extraced froma single value container, but the string could not be handled.
 		case encodedStringInvalid

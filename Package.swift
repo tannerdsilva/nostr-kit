@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.9
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 import PackageDescription
 
@@ -25,7 +25,8 @@ var nostrTargetDeps:[PackageDescription.Target.Dependency] = [
 	.product(name:"secp256k1", package:"secp256k1.swift"),
 	.product(name:"RAW", package:"rawdog"),
 	.product(name:"Crypto", package:"swift-crypto"),
-	.product(name:"SystemPackage", package:"swift-system")
+	.product(name:"SystemPackage", package:"swift-system"),
+	"cnostr"
 ]
 
 let package = Package(

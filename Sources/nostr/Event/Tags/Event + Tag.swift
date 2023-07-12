@@ -1,11 +1,5 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-	import Glibc
-#else
-	import Darwin.C
-#endif
-
 // event tag
 extension Event {
 	/// an event tag. used to attach various reference types and schemes to events.

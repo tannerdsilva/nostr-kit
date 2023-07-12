@@ -1,3 +1,19 @@
+## v0.5.0
+
+- Cryptographic signing of the events are not handled natively by two primary event protocols.
+
+	- Created an open ended protocol for expressing an unsigned event with mutable content: `NOSTR_event_unsigned`.
+
+	- Created an open ended protocol for expressing a signed event with mutable content: `NOSTR_event_signed`.
+
+	- Unit tests and `nostr-cc` updated to account for this new method for signing events.
+
+- Additional protocols introduced to implement additional functions or expressions of nostr data types
+
+	- `NOSTR_date` protocol allows for custom implementations of a date type.
+
+	- `NOSTR_kind` protocol allows for custom implementations of any kind type.
+
 ## v0.4.0
 
 - Major changes in how Event tags are structured and expressed in the API.

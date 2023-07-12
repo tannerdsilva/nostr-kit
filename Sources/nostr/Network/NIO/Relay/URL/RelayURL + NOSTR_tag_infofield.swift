@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 extension Relay.URL:NOSTR_tagged {
     public static var NOSTR_tagged_name: Event.Tag.Name {
         return "r"

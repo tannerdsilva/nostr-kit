@@ -2,11 +2,7 @@ import NIOCore
 import QuickJSON
 import Logging
 
-#if os(Linux)
-import Glibc
-#else
-import Darwin.C
-#endif
+import cnostr
 
 extension Relay {
 
@@ -36,7 +32,7 @@ extension Relay {
 
 		/// publishing structs that are currently waiting for an ok response.
 		/// - see NIP-20 for more information.
-		private var activePublishes:[Event.UID:Publishing] = [:]
+		private var activePublishes:[Event.Signed.UID:Publishing] = [:]
 
 		internal init(url:Relay.URL, configuration:Relay.Client.Configuration) {
 			var makeLogger = Self.logger
@@ -178,7 +174,7 @@ extension Relay {
 
 extension Relay.Handler {
 	/// a struct that is used to track the publishing of an event.
-	internal func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.UID, channel:Channel) -> EventLoopFuture<Void> {
+	internal func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.Signed.UID, channel:Channel) -> EventLoopFuture<Void> {
 		channel.eventLoop.submit {
 			#if DEBUG
 			self.logger.debug("adding publishing struct for event uid: \(evUID)")

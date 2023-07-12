@@ -48,12 +48,14 @@ extension Filter:Codable {
 			self.kinds = nil
 		}
 		do {
-			self.since = try container.decode(Date.self, forKey: .since)
+			let getSince = try container.decode(UInt64.self, forKey: .since)
+			self.since = Date(NOSTR_date_unixInterval:getSince)
 		} catch {
 			self.since = nil
 		}
 		do {
-			self.until = try container.decode(Date.self, forKey: .until)
+			let getUntil = try container.decode(UInt64.self, forKey: .until)
+			self.until = Date(NOSTR_date_unixInterval:getUntil)
 		} catch {
 			self.until = nil
 		}
@@ -79,10 +81,10 @@ extension Filter:Codable {
 			try container.encode(kinds, forKey: .kinds)
 		}
 		if self.since != nil {
-			try container.encode(since, forKey: .since)
+			try container.encode(since!.NOSTR_date_unixInterval, forKey: .since)
 		}
 		if self.until != nil {
-			try container.encode(until, forKey: .until)
+			try container.encode(until!.NOSTR_date_unixInterval, forKey: .until)
 		}
 		if self.authors != nil {
 			try container.encode(authors, forKey: .authors)

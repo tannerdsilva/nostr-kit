@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 import struct NIOWebSocket.WebSocketOpcode
 import enum NIOHTTP1.HTTPResponseStatus
 

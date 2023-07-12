@@ -1,3 +1,5 @@
+// (c) tanner silva 2023. all rights reserved.
+
 /// allows an instance of a specific Swift type to convey itself explicitly as a tag instance.
 public protocol NOSTR_tag:ExpressibleByArrayLiteral, Decodable, Encodable, Collection where Element == String, ArrayLiteralType == String {
 	associatedtype Element = String // element must be string literal since any of the sub protocols that can be found in the body of this type.

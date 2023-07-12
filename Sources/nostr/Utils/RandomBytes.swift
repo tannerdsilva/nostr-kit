@@ -1,13 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-	import Glibc
-	import SystemPackage
-#elseif os(macOS)
-	import Darwin.C
-	import SystemPackage
-#endif
-
+import cnostr
+import SystemPackage
 internal struct RandomBytes {
 	/// generate random bytes of a given size
 	/// - parameter size: the number of bytes to generate

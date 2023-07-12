@@ -3,6 +3,7 @@ import NIO
 import nostr
 import struct Foundation.URL
 import class Foundation.FileManager
+import QuickJSON
 
 extension CLI {
 	struct Relay:AsyncParsableCommand {
@@ -63,14 +64,10 @@ extension CLI {
 				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
 				let relayConn = try await nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).get()
 				
-				var newEvent = nostr.Event()
-				newEvent.created = Date()
-				newEvent.pubkey = readKey.pubkey
-				newEvent.kind = nostr.Event.Kind.text_note
-				newEvent.content = myMessage
-
-				try newEvent.computeUID()
-				try newEvent.sign(readKey.seckey)
+				var unsignedEvent = nostr.Event.Unsigned(kind:nostr.Event.Kind.text_note)
+				unsignedEvent.content = myMessage
+				let newEvent = try unsignedEvent.sign(to:nostr.Event.Signed.self, as:readKey)
+				CLI.logger.info("posting event: \(newEvent.uid.description.prefix(8))")
 				let result = try await relayConn.write(event:newEvent).get()
 				result.promise.futureResult.whenComplete { getResult in
 					switch getResult {

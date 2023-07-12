@@ -1,11 +1,6 @@
 // (c) tanner silva 2023. all rights reserved.
 
-#if os(Linux)
-import Glibc
-#else
-import Darwin.C
-#endif
-
+import cnostr
 import RAW
 
 /// returns a ``time_t`` struct representing the reference date for this Date type.
@@ -86,17 +81,6 @@ internal let encDate = encodingReferenceDate()
     }
 }
 
-extension Date:Codable {
-	public init(from decoder:Decoder) throws {
-		let container = try decoder.singleValueContainer()
-		self.init(unixInterval:Double(try container.decode(Int.self)))
-	}
-	public func encode(to encoder:Encoder) throws {
-		var container = encoder.singleValueContainer()
-		try container.encode(Int(self.timeIntervalSinceUnixDate()))
-	}
-}
-
 extension Date:RAW_convertible {
 	/// initialize from database
 	public init?(_ value:RAW_val) {
@@ -148,5 +132,19 @@ extension Date:Hashable, Equatable, Comparable {
 	/// equatable conformance
 	static public func == (lhs:Self, rhs:Self) -> Bool {
 		return lhs.rawVal == rhs.rawVal
+	}
+}
+
+extension Date:NOSTR_date {
+	public var NOSTR_date_unixInterval:UInt64 {
+		return UInt64(self.rawVal)
+	}
+
+	public init(NOSTR_date_unixInterval:UInt64) {
+		self.init(unixInterval:Double(NOSTR_date_unixInterval))
+	}
+
+	public static func currentTime() -> Self {
+		return Self()
 	}
 }
