@@ -124,7 +124,7 @@ extension WebSocket {
 			var hasher = SHA1()
 			hasher.update(string: self.requestKey)
 			hasher.update(string: magicWebSocketGUID)
-			let expectedAcceptValue = String(base64Encoding: hasher.finish())
+			let expectedAcceptValue = String.base64Encoded(bytes:hasher.finish())
 			
 			#if DEBUG
 			let upgradeResult = acceptValueHeader[0] == expectedAcceptValue

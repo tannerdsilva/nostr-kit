@@ -5,16 +5,25 @@ import cnostr
 internal struct InitializationVector {
 	// 16 byte static buffer
 	internal var bytes:(UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+	/// initialize with random bytes.
+	internal init() throws {
+		self = try RandomBytes.generate(size:16).asRAW_val({ rawVal in
+			return try Self.init(raw:rawVal)
+		})
+	}
+
+	/// initialize with existing bytes.
+	internal init(raw:RAW_val) throws {
+		guard raw.mv_size == MemoryLayout<Self>.size else {
+			throw Error.invalidInitializationVectorLength
+		}
+		_ = memcpy(&bytes, raw.mv_data, MemoryLayout<Self>.size)
+	}
 }
 
 /// RAW_convertible conformance
-extension InitializationVector:RAW_convertible {
-	public init?(_ value:RAW_val) {
-		guard value.mv_size == MemoryLayout<Self>.size else {
-			return nil
-		}
-		_ = memcpy(&bytes, value.mv_data, MemoryLayout<Self>.size)
-	}
+extension InitializationVector:RAW_encodable {
 	public func asRAW_val<R>(_ valFunc:(inout RAW_val) throws -> R) rethrows -> R {
 		return try withUnsafePointer(to: bytes, { unsafePointer in
 			var val = RAW_val(mv_size: MemoryLayout<Self>.size, mv_data: UnsafeMutableRawPointer(mutating: unsafePointer))
@@ -38,5 +47,11 @@ extension InitializationVector:RAW_comparable {
 			// If the common prefix is the same, compare their lengths.
 			return Int32(a!.pointee.mv_size) - Int32(b!.pointee.mv_size)
 		}
+	}
+}
+
+extension InitializationVector {
+	enum Error:Swift.Error {
+		case invalidInitializationVectorLength
 	}
 }

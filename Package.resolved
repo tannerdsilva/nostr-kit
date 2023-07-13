@@ -63,15 +63,6 @@
       }
     },
     {
-      "identity" : "swift-extras-base64",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swift-extras/swift-extras-base64.git",
-      "state" : {
-        "revision" : "97237cf1bc1feebaeb0febec91c1e1b9e4d839b3",
-        "version" : "0.7.0"
-      }
-    },
-    {
       "identity" : "swift-log",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-log.git",

@@ -72,7 +72,7 @@ extension NOSTR_event_signed {
 		self = try Self(uid:uid, sig:sig, tags:tags, author:author, date:NOSTR_event_date_TYPE(NOSTR_date_unixInterval:date), kind:kind, content:content)
 	}
 	public func encode(to encoder:Swift.Encoder) throws {
-		var container = try encoder.container(keyedBy: nostr.Event.CodingKeys.self)
+		var container = encoder.container(keyedBy: nostr.Event.CodingKeys.self)
 		try container.encode(self.uid, forKey:.uid)
 		try container.encode(self.sig, forKey:.sig)
 		var tagsArr = container.nestedUnkeyedContainer(forKey:.tags)

@@ -4,6 +4,10 @@
 
 	- Unit tests included.
 
+- Eliminated external base64 library (dumb - this was a carryover from the websocket development that should have been eliminated sooner)
+
+	- Unit tests included.
+
 ## v0.5.0
 
 - Cryptographic signing of the events are not handled natively by two primary event protocols.

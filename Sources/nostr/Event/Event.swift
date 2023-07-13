@@ -2,7 +2,6 @@
 
 import RAW
 import QuickJSON
-import Crypto
 import secp256k1
 
 /// the infamous nostr event. this is the core data structure that is used to represent all data in the nostr network.

@@ -67,7 +67,7 @@ extension WebSocket {
 
 		// create a random key for the upgrade request
 		let requestKey = (0..<16).map { _ in UInt8.random(in: .min ..< .max) }
-		let base64Key = String(base64Encoding:requestKey, options:[])
+		let base64Key = String.base64Encoded(bytes:requestKey)
 
 		// build the initial request writer.
 		let initialRequestWriter = WebSocket.InitialRequestWriter(url:splitURL)
@@ -97,7 +97,6 @@ extension WebSocket {
 			timeoutTask.cancel()
 			// the upgrade succeeded. remove the initial request writer.
 			channel.pipeline.removeHandler(initialRequestWriter, promise:nil)
-		
 		})
 
 		// add the upgrade and initial request write handlers.
