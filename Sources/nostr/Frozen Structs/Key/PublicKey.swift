@@ -76,6 +76,25 @@ extension PublicKey:CustomStringConvertible {
 	}
 }
 
+// coding key conformance
+extension PublicKey:CodingKey {
+	public var stringValue:String {
+		return self.hexEncodedString()
+	}
+	public init?(stringValue:String) {
+		do {
+			try self.init(hexEncodedString: stringValue)
+		} catch {
+			return nil
+		}
+	}
+	public var intValue:Int? {
+		return nil
+	}
+	public init?(intValue:Int) {
+		return nil
+	}
+}
 
 extension PublicKey:Codable {
 	// decode implementation
@@ -131,24 +150,6 @@ extension PublicKey {
 
 		/// thrown when the data returned from the bech32 decoder is shorter or longer than the size of the Key struct (32 bytes)
 		case invalidKeyLength(size_t)
-	}
-}
-
-extension PublicKey:NOSTR_tagged {
-	public init(NOSTR_tag_index: String, NOSTR_tag_addlfields: [any NOSTR_tag_addlfield]) throws {
-		self = try Self(hexEncodedString: NOSTR_tag_index)
-	}
-
-	public static var NOSTR_tagged_name:Event.Tag.Name {
-		return "p"
-	}
-
-	public var NOSTR_tag_indexfield:String {
-		return self.hexEncodedString()
-	}
-
-	public var NOSTR_tag_addlfields: [any NOSTR_tag_addlfield] {
-		return []
 	}
 }
 

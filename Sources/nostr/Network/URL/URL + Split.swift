@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
-extension Relay.URL {
-	/// Splits up a `Relay.URL` into its necessary components for connecting to a relay.
+extension URL {
+	/// Splits up a `URL` into its necessary components for connecting to a relay.
 	internal struct Split {
 		/// the host to connect to (ipv4, ipv6, or dns name)
 		internal let host:String
@@ -15,7 +15,7 @@ extension Relay.URL {
 		/// is TLS required when connecting to this relay?
 		internal let tlsRequired:Bool
 
-		internal init?(url:Relay.URL) {
+		internal init?(url:URL) {
 			guard let host: String = url.host else { return nil }
 			self.host = host
 			if let port = url.port {
@@ -41,7 +41,7 @@ extension Relay.URL {
 	}
 
 	/// returns a URL.Split from a given URL instance
-	internal func split() throws -> Split {
+	internal func split() throws -> Self.Split {
 		let makeSplit = Split(url:self)
 		guard makeSplit != nil else {
 			throw Error.invalidURL

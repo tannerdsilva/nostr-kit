@@ -27,14 +27,14 @@ extension Relay {
 		// pointer to a buffer that is used to decode inbound data
 		private let decodingFlags:QuickJSON.Decoder.Flags
 		private let logger:Logger
-		private let url:Relay.URL
+		private let url:URL
 		private var configuration:Relay.Client.Configuration
 
 		/// publishing structs that are currently waiting for an ok response.
 		/// - see NIP-20 for more information.
 		private var activePublishes:[Event.Signed.UID:Publishing] = [:]
 
-		internal init(url:Relay.URL, configuration:Relay.Client.Configuration) {
+		internal init(url:URL, configuration:Relay.Client.Configuration) {
 			var makeLogger = Self.logger
 			makeLogger[metadataKey:"url"] = "\(url)"
 			self.logger = makeLogger

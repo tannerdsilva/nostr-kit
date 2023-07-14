@@ -62,7 +62,7 @@ extension NOSTR_event_signed {
 		var tagsArr = try container.nestedUnkeyedContainer(forKey:.tags)
 		var tags = Event.Tags()
 		while !tagsArr.isAtEnd {
-			tags.append(try tagsArr.decode(Event.Tag.self))
+			tags.append(try tagsArr.decode([String].self))
 		}
 		let author = try container.decode(PublicKey.self, forKey:.author)
 		let date = try container.decode(UInt64.self, forKey:.date)
@@ -77,7 +77,7 @@ extension NOSTR_event_signed {
 		try container.encode(self.sig, forKey:.sig)
 		var tagsArr = container.nestedUnkeyedContainer(forKey:.tags)
 		for tag in self.tags {
-			try tagsArr.encode(tag)
+			try tagsArr.encode(Array(tag))
 		}
 		try container.encode(self.author, forKey:.author)
 		try container.encode(self.date.NOSTR_date_unixInterval, forKey:.date)

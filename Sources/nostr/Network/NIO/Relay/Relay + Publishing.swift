@@ -17,11 +17,11 @@ extension Relay {
 			public let error:Swift.Error
 		}
 		
-		public let relay:Relay.URL
+		public let relay:URL
 		public let event:String
 		public let promise:EventLoopPromise<Date>
 		
-		internal init(relay:Relay.URL, event:String, channel:Channel) {
+		internal init(relay:URL, event:String, channel:Channel) {
 			self.relay = relay
 			self.event = event
 			self.promise = channel.eventLoop.makePromise(of:Date.self)

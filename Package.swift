@@ -12,7 +12,8 @@ var dependencies = [
 	Package.Dependency.package(url:"https://github.com/tannerdsilva/rawdog.git", from:"0.0.7"),
 	Package.Dependency.package(url:"https://github.com/jb55/secp256k1.swift", revision:"40b4b38b3b1c83f7088c76189a742870e0ca06a9"),
 	Package.Dependency.package(url:"https://github.com/apple/swift-crypto.git", from:"2.5.0"),
-	Package.Dependency.package(url:"https://github.com/apple/swift-system.git", from:"1.0.0")
+	Package.Dependency.package(url:"https://github.com/apple/swift-system.git", from:"1.0.0"),
+	Package.Dependency.package(url:"https://github.com/swift-server/async-http-client", from:"1.18.0")
 ]
 var nostrTargetDeps:[PackageDescription.Target.Dependency] = [
 	.product(name:"NIOSSL", package:"swift-nio-ssl"),
@@ -24,6 +25,7 @@ var nostrTargetDeps:[PackageDescription.Target.Dependency] = [
 	.product(name:"RAW", package:"rawdog"),
 	.product(name:"Crypto", package:"swift-crypto"),
 	.product(name:"SystemPackage", package:"swift-system"),
+	.product(name:"AsyncHTTPClient", package:"async-http-client"),
 	"cnostr"
 ]
 
