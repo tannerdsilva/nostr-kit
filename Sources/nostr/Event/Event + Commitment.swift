@@ -46,7 +46,7 @@ extension Event {
 			try container.encode(kind)
 			var nestedUnkeyedContainer = container.nestedUnkeyedContainer()
 			for curTag in tags {
-				try nestedUnkeyedContainer.encode(curTag)
+				try nestedUnkeyedContainer.encode(Array(curTag))
 			}
 			try container.encode(content)
 		}

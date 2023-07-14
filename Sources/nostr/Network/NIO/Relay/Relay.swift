@@ -57,7 +57,7 @@ extension Relay {
 	/// 	- eventLoop: the event loop to use for the connection.
 	/// - returns: a future that resolves to a `Relay` connection.
 	public static func connect(url:URL, headers:HTTPHeaders = [:], configuration: Relay.Client.Configuration, on eventLoop:EventLoop) -> EventLoopFuture<Relay> {
-		guard let splitURL = Relay.URL.Split(url:url) else {
+		guard let splitURL = URL.Split(url:url) else {
 			return eventLoop.makeFailedFuture(Error.invalidURL(url))
 		}
 		let promise = eventLoop.makePromise(of: Relay.self)

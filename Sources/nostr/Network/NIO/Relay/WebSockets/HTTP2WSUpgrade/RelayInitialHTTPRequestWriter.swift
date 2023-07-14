@@ -15,7 +15,7 @@ extension WebSocket {
 
 		/// initialize with a URL.
 		/// - throws: if the URL is invalid
-		internal init(url:Relay.URL.Split) {
+		internal init(url:URL.Split) {
 			self.urlPath = url.pathQuery
 		}
 

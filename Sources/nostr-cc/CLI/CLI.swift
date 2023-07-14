@@ -1,4 +1,7 @@
 import ArgumentParser
+import nostr
+import Foundation
+import QuickJSON
 
 @main
 struct CLI:AsyncParsableCommand {

@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
 /// Store for parameters key, value pairs extracted from URI
-extension Relay.URL {
+extension URL {
 	public struct Parameters: Sendable {
 		public typealias Collection = FlatDictionary<Substring, Substring>
 		
@@ -117,7 +117,7 @@ extension Relay.URL {
 	}
 }
 
-extension Relay.URL.Parameters: Collection {
+extension URL.Parameters: Collection {
 	public typealias Index = Collection.Index
 	public var startIndex: Index { self.parameters.startIndex }
 	public var endIndex: Index { self.parameters.endIndex }
@@ -125,7 +125,7 @@ extension Relay.URL.Parameters: Collection {
 	public func index(after index: Index) -> Index { self.parameters.index(after: index) }
 }
 
-extension Relay.URL.Parameters: CustomStringConvertible {
+extension URL.Parameters: CustomStringConvertible {
 	public var description: String {
 		String(describing: self.parameters)
 	}

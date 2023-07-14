@@ -41,7 +41,7 @@ extension WebSocket {
 
 		// configuration information
 		/// the url that the relay is connected to
-		internal let url:Relay.URL
+		internal let url:URL
 		/// which operation will be used when writing data to the websocket?
 		internal let writeOp:WebSocketOpcode
 		/// the maximum number of bytes that are allowed to pass through the handler for a single data event.

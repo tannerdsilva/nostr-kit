@@ -2,6 +2,7 @@ import RAW
 import cnostr
 
 internal struct AES_CBC {
+	
 	static func encrypt<D>(data:D, iv:InitializationVector, sharedSecret:SharedSecret) -> [UInt8] where D:RAW_encodable {
 		sharedSecret.asRAW_val({ ssVal in
 			iv.asRAW_val({ ivVal in

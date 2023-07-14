@@ -31,7 +31,7 @@ extension CLI {
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey).nkey")
 				let readKey = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
 				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
-				let relayConn = try nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).wait()
+				let relayConn = try nostr.Relay.connect(url:nostr.URL(url), configuration: buildConf, on:mainEventLoop.next()).wait()
 
 				sleep(512)
 				
@@ -62,7 +62,7 @@ extension CLI {
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(myKey).nkey")
 				let readKey = try nostr.KeyPair.fromJSONEncodedPath(baseURL)
 				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
-				let relayConn = try await nostr.Relay.connect(url:nostr.Relay.URL(url), configuration: buildConf, on:mainEventLoop.next()).get()
+				let relayConn = try await nostr.Relay.connect(url:nostr.URL(url), configuration: buildConf, on:mainEventLoop.next()).get()
 				
 				var unsignedEvent = nostr.Event.Unsigned(kind:nostr.Event.Kind.text_note)
 				unsignedEvent.content = myMessage
