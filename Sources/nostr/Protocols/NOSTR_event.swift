@@ -25,7 +25,24 @@ public protocol NOSTR_event_unsigned {
 	/// initialize a new instance of the unsigned event based on the unsigned content of this instance and the given author.
 	/// this function will mutate the given unsigned event if its date is nil. a nil date is a convenience feature for developers to specify that the content should be dated at sign time.
 	/// - default implementation provided.
-	mutating func sign<S>(to signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
+	mutating func sign<S>(type signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
+}
+
+/// a protocol for expressing a signed and encrypted nostr event.
+/// - NOTE: programming objects that conform to this protocol are expected to represent ONLY content in the content property. if an initialization vector is stored in the content property of a particular implementation, it **MUST** be parsed and removed on initialization.
+public protocol NOSTR_event_signed_encrypted:NOSTR_event_signed {
+	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
+
+	/// the intended recipient of the encrypted event
+	var recipient:PublicKey { get }
+	/// the initialization vector used to encrypt the event
+	var iv:InitializationVector { get }
+
+	/// initialize a new instance of a signed and encrypted event based on the given signed event. specific means of derriving the the recipient and iv are left to the responsibility of the implementor in this function.
+	init(uid:Event.Signed.UID, sig:Event.Signed.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
+
+	/// decrypt the content of the event using the given recipient keypair.
+	func decryptContent(as recipient:KeyPair) throws -> String
 }
 
 /// a protocol for expressing a complete nostr event.
@@ -49,8 +66,11 @@ public protocol NOSTR_event_signed:Codable {
 	var content:String { get }
 
 	/// initialize a new instance of the signed event based on the given parameters.
-	/// - required implementation provided
+	/// - **required** implementation.
 	init(uid:Event.Signed.UID, sig:Event.Signed.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
+
+	/// executes all of the work to verify if the instance's signature is valid.
+	func isSignatureValid() -> Bool
 }
 
 /// default codable implementation
@@ -87,7 +107,7 @@ extension NOSTR_event_signed {
 }
 
 extension NOSTR_event_unsigned {
-	public mutating func sign<S>(to signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
+	public mutating func sign<S>(type signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
 		// generate the commitment bytes
 		let encoder = QuickJSON.Encoder()
 		let commit = Event.Commitment(unsigned:&self, author:author)
@@ -123,7 +143,7 @@ extension NOSTR_event_unsigned {
 }
 
 extension NOSTR_event_signed {
-	public func isValid() -> Bool {
+	public func isSignatureValid() -> Bool {
 		do {
 			// generate the commitment bytes
 			let newComm = nostr.Event.Commitment(signed:self)

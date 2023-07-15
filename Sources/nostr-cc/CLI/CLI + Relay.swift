@@ -66,7 +66,7 @@ extension CLI {
 				
 				var unsignedEvent = nostr.Event.Unsigned(kind:nostr.Event.Kind.text_note)
 				unsignedEvent.content = myMessage
-				let newEvent = try unsignedEvent.sign(to:nostr.Event.Signed.self, as:readKey)
+				let newEvent = try unsignedEvent.sign(type:nostr.Event.Signed.self, as:readKey)
 				CLI.logger.info("posting event: \(newEvent.uid.description.prefix(8))")
 				let result = try await relayConn.write(event:newEvent).get()
 				result.promise.futureResult.whenComplete { getResult in
@@ -82,6 +82,5 @@ extension CLI {
 				// let relay = try nostr.Relay.connect(url:try nostr.Relay.URL(url))
 			}
 		}
-
 	}
 }

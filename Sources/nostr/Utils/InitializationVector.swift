@@ -2,13 +2,13 @@ import RAW
 
 import cnostr
 
-internal struct InitializationVector {
+public struct InitializationVector {
 	// 16 byte static buffer
 	internal var bytes:(UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8) = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 	/// initialize with random bytes.
-	internal init() throws {
-		self = try RandomBytes.generate(size:16).asRAW_val({ rawVal in
+	static func generateRandom() throws -> Self {
+		return try RandomBytes.generate(size:16).asRAW_val({ rawVal in
 			return try Self.init(raw:rawVal)
 		})
 	}

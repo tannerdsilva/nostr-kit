@@ -21,6 +21,20 @@ public struct Event {
 			self.content = content
 		}
 	}
+
+	public struct Encrypted {
+
+		// public struct NIP_04:NOSTR_event_signed {
+		// 	public let uid:Event.Signed.UID
+		// 	public let sig:Event.Signed.Signature
+		// 	public let tags:Tags
+		// 	public let author:PublicKey
+		// 	public let recipient:PublicKey
+		// 	public let date:Date
+		// 	public let kind:Kind
+		// 	public let content:String
+		// }
+	}
 	
 	/// represents an event whose contents are immutable after signing
 	public struct Signed:NOSTR_event_signed {
