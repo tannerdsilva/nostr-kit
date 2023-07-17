@@ -18,7 +18,7 @@ however, there are still many foundational NIPs that nostr-kit implements. among
 - NIP-20
 - NIP-42
 
-### NOICE
+### NOTICE
 
 This project is still in its (extremely early) infancy, and while functional for limited uses (such as posting events), the API around doing anything functional is almost GUARANTEED to change over the coming weeks and months. These API's may even change multiple times.
 

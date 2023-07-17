@@ -3,7 +3,7 @@
 /// standard nostr relay filter
 public struct Filter {
 	/// event uids to filter by
-	public var ids:Set<String>?
+	public var uids:Set<Event.Signed.UID>?
 	/// event kinds to filter by
 	public var kinds:Set<nostr.Event.Kind>?
 	/// retruned events will be limited to those that follow this date
@@ -17,14 +17,14 @@ public struct Filter {
 
 	/// create a new filter
 	public init(
-		ids:Set<String>? = nil,
+		uids:Set<Event.Signed.UID>? = nil,
 		kinds:Set<nostr.Event.Kind>? = nil,
 		since:Date? = nil,
 		until:Date? = nil,
 		limit:UInt32? = nil,
 		authors:Set<nostr.PublicKey>? = nil
 	) {
-		self.ids = ids
+		self.uids = uids
 		self.kinds = kinds
 		self.since = since
 		self.until = until
@@ -33,14 +33,18 @@ public struct Filter {
 	}
 }
 
+extension nostr.Filter:NOSTR_filter {
+    public typealias NOSTR_filter_event_TYPE = nostr.Event.Signed
+}
+
 extension Filter:Codable {
 	/// initialize using a standard swift decoder
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: CodingKeys.self)
 		do {
-			self.ids = try container.decode(Set<String>.self, forKey: .ids)
+			self.uids = try container.decode(Set<Event.Signed.UID>.self, forKey: .ids)
 		} catch {
-			self.ids = nil
+			self.uids = nil
 		}
 		do {
 			self.kinds = try container.decode(Set<nostr.Event.Kind>.self, forKey: .kinds)
@@ -74,8 +78,8 @@ extension Filter:Codable {
 	/// export to a standard swift encoder
 	public func encode(to encoder:Swift.Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
-		if self.ids != nil {
-			try container.encode(ids, forKey: .ids)
+		if self.uids != nil {
+			try container.encode(uids, forKey: .ids)
 		}
 		if self.kinds != nil {
 			try container.encode(kinds, forKey: .kinds)
@@ -97,7 +101,7 @@ extension Filter:Codable {
 
 extension nostr.Filter:Hashable, Equatable {
 	public static func == (lhs:Filter, rhs:Filter) -> Bool {
-		return lhs.ids == rhs.ids
+		return lhs.uids == rhs.uids
 			&& lhs.kinds == rhs.kinds
 			&& lhs.since == rhs.since
 			&& lhs.until == rhs.until
@@ -105,7 +109,7 @@ extension nostr.Filter:Hashable, Equatable {
 			&& lhs.limit == rhs.limit
 	}
 	public func hash(into hasher:inout Hasher) {
-		hasher.combine(ids)
+		hasher.combine(uids)
 		hasher.combine(kinds)
 		hasher.combine(since)
 		hasher.combine(until)

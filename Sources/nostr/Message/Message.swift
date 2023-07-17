@@ -4,7 +4,7 @@ import QuickJSON
 
 extension Relay {
 	/// the nostr message. this is the data structure that relays pass back and forth to their remote peers, and vice versa.
-	public enum Message {
+	public enum Message<E:NOSTR_event_signed> {
 
 		/// subscription message (with attached metadata).
 		case subscribe(SubscribeInfo)
@@ -44,21 +44,21 @@ extension Relay.Message {
 		/// an event context used for writing.
 		/// - used by clients to write events to a relay.
 		/// - used by relays to parse events from clients.
-		case write(nostr.Event.Signed)
+		case write(E)
 
 		/// a context used when an event corresponds to a subscription.
 		/// - used by clients to consume events from relays.
 		/// - used by relays to write requested events to clients.
-		case sub(String, nostr.Event.Signed)
+		case sub(String, E)
 
 		/// initialize an event context from a partially parsed context
 		internal init(from container:inout UnkeyedDecodingContainer) throws {
 			switch container.count {
 				case 2:
-					self = .write(try container.decode(nostr.Event.Signed.self))
+					self = .write(try container.decode(E.self))
 				case 3:
 					let subID = try container.decode(String.self)
-					let event = try container.decode(nostr.Event.Signed.self)
+					let event = try container.decode(E.self)
 					self = .sub(subID, event)
 				default:
 					throw ParseError()
@@ -77,7 +77,7 @@ extension Relay.Message {
 		}
 
 		/// returns the enclosed event regardless of context
-		public func getEvent() -> nostr.Event.Signed {
+		public func getEvent() -> E {
 			switch self {
 				case .write(let event):
 					return event

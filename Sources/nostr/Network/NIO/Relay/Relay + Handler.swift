@@ -12,8 +12,8 @@ extension Relay {
 	/// - implements NIP-20 for handling the results of publishing events
 	internal final class Handler:ChannelDuplexHandler, RemovableChannelHandler {
 		internal typealias InboundIn = ByteBuffer
-		internal typealias InboundOut = Message
-		internal typealias OutboundIn = Message
+		internal typealias InboundOut = Message<nostr.Event.Signed>
+		internal typealias OutboundIn = Message<nostr.Event.Signed>
 		internal typealias OutboundOut = ByteBuffer
 
 		internal static let logger = makeDefaultLogger(label:"nostr-net:relay-handler", logLevel:.info)
@@ -51,7 +51,10 @@ extension Relay {
 			#if DEBUG
 			self.logger.info("relay connected.", metadata: ["parse_buff_size": "\(recommendedSize) bytes"])
 			#endif
+
+			// this malloc is freed in handlerRemoved
 			self.decoderPointer = malloc(recommendedSize)
+			
 			do {
 				let memPool = try QuickJSON.MemoryPool.allocate(staticSize:recommendedSize, staticBuffer: self.decoderPointer!)
 				self.decoder = QuickJSON.Decoder(memory:memPool)
@@ -70,7 +73,10 @@ extension Relay {
 			#endif
 			self.decoder = nil
 			self.encoder = nil
+
+			// frees the malloc from handlerAdded
 			free(self.decoderPointer)
+
 			self.decoderPointer = nil
 			self.pool = nil
 			
@@ -81,7 +87,7 @@ extension Relay {
 			do {
 				let capMessage = try buffer.withUnsafeReadableBytes { (bytes:UnsafeRawBufferPointer) in
 					try bytes.asRAW_val { rv in
-						try self.decoder!.decode(Message.self, from:rv.mv_data, size:rv.mv_size, flags:self.decodingFlags)
+						try self.decoder!.decode(Message<nostr.Event.Signed>.self, from:rv.mv_data, size:rv.mv_size, flags:self.decodingFlags)
 					}
 				}
 
@@ -186,14 +192,14 @@ extension Relay.Handler {
 
 extension Relay.Handler {
 	/// writes a NIP42 assertion to the remote peer.
-	/// - NOTE: this function assumes that there is ALWAYS a valid authentication key in the configuration, and will crash if there is not.
+	/// - NOTE: this function assumes that there is ALWAYS a valid authentication key in the configuration, and **WILL** crash if there is not.
 	internal func writeNIP42Assertion(challenge:String, context:ChannelHandlerContext, promise:EventLoopPromise<Void>?) {
 		do {
 			// generate a new event
 			let authEvent = try nostr.Event.nip42Assertion(to:challenge, from:self.url, using: self.configuration.authenticationKey!)
 		
 			// encode and send the response
-			let encMessage = try encoder!.encode(nostr.Relay.Message.authentication(.assertion(authEvent)))
+			let encMessage = try encoder!.encode(nostr.Relay.Message<nostr.Event.Signed>.authentication(.assertion(authEvent)))
 
 			// write the message to the buffer
 			var writeBuffer = context.channel.allocator.buffer(capacity:encMessage.count)
