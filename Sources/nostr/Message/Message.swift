@@ -24,10 +24,6 @@ extension Relay {
 		/// - argument 3: a human readable message
 		case ok(Event.Signed.UID, Bool, String)
 
-		/// an authentication challenge containing a challenge string.
-		/// - see nostr nip-42 for more information.
-		case authentication(AuthStage)
-
 		/// used to send human readable messages to the other side.
 		case notice(String)
 	}
@@ -89,18 +85,6 @@ extension Relay.Message {
 }
 
 extension Relay.Message {
-	public enum AuthStage {
-		/// represents the challenge stage of the authentication scheme
-		/// - argument 1: the challenge string
-		case challenge(String)
-
-		/// the assertion stage of the authentication scheme.
-		/// - argument 1: the signed authentication proof event
-		case assertion(nostr.Event.Signed)
-	}
-}
-
-extension Relay.Message {
 	public struct SubscribeInfo:Codable {
 		/// the subscription ID
 		public var sub_id:String
@@ -138,18 +122,7 @@ extension Relay.Message:Codable {
 				let subID = try container.decode(String.self)
 				self = .endOfStoredEvents(subID)
 			case "AUTH":
-				do {
-					let challenge = try container.decode(String.self)
-					self = .authentication(.challenge(challenge))
-				} catch QuickJSON.Decoder.Error.valueTypeMismatch(let mismatchInfo) {
-					switch mismatchInfo.found {
-						case .obj:
-							let aResponse = try container.decode(nostr.Event.Signed.self)
-							self = .authentication(.assertion(aResponse))
-						default:
-							throw QuickJSON.Decoder.Error.valueTypeMismatch(mismatchInfo)
-					}
-				}
+				
 			case "OK":
 				let proof = try container.decode(Event.Signed.UID.self)
 				let didSucceed = try container.decode(Bool.self)

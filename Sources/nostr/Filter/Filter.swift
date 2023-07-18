@@ -2,6 +2,7 @@
 
 /// standard nostr relay filter
 public struct Filter {
+
 	/// event uids to filter by
 	public var uids:Set<Event.Signed.UID>?
 	/// event kinds to filter by
@@ -14,16 +15,11 @@ public struct Filter {
 	public var limit:UInt32?
 	/// returned events must be authored by one of these public keys
 	public var authors:Set<nostr.PublicKey>?
+	/// the tags associated with this filter
+	public var tags:[String:[any NOSTR_tag_index]]?
 
 	/// create a new filter
-	public init(
-		uids:Set<Event.Signed.UID>? = nil,
-		kinds:Set<nostr.Event.Kind>? = nil,
-		since:Date? = nil,
-		until:Date? = nil,
-		limit:UInt32? = nil,
-		authors:Set<nostr.PublicKey>? = nil
-	) {
+	public init(uids:Set<Event.Signed.UID>? = nil, kinds:Set<nostr.Event.Kind>? = nil, since:Date? = nil, until:Date? = nil, limit:UInt32? = nil, authors:Set<nostr.PublicKey>? = nil) {
 		self.uids = uids
 		self.kinds = kinds
 		self.since = since

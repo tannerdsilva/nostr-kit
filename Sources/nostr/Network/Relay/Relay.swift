@@ -32,7 +32,8 @@ public struct Relay {
 
 	public func write(event:nostr.Event.Signed) -> EventLoopFuture<Publishing> {
 		let pubPromise = channel.eventLoop.makePromise(of:Publishing.self)
-		let publishing = Publishing(relay:self.url, event:event.uid.description, channel:channel)
+		let publishing = Publishing(relay:self.url, event:event.uid, channel:channel)
+		// self.handler.ok
 		self.handler.addPublishingStruct(publishing, for:event.uid, channel:self.channel).whenComplete({
 			switch $0 {
 				case .success():

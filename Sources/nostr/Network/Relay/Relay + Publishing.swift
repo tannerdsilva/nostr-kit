@@ -1,6 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
-import NIO
+import struct NIO.EventLoopPromise
+import protocol NIO.Channel
 
 extension Relay {
 	
@@ -16,12 +17,15 @@ extension Relay {
 		public struct NetworkFailure:Swift.Error {
 			public let error:Swift.Error
 		}
-		
+
+		/// the public-facing relay URL that is being published to
 		public let relay:URL
-		public let event:String
+		/// the event UID that is being published
+		public let event:nostr.Event.Signed.UID
+		/// the promise that will be fulfilled when the relay responds with an OK or not OK
 		public let promise:EventLoopPromise<Date>
 		
-		internal init(relay:URL, event:String, channel:Channel) {
+		internal init(relay:URL, event:Event.Signed.UID, channel:Channel) {
 			self.relay = relay
 			self.event = event
 			self.promise = channel.eventLoop.makePromise(of:Date.self)

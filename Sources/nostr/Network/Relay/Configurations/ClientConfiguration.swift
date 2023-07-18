@@ -42,6 +42,8 @@ extension Relay.Client {
 		/// the tls configuration for this relay
 		public var tlsConfiguration:TLSConfiguration
 
+		public var types:Array<any NOSTR_frame_nametypes.Type>
+
 		/// initialize a new configuration for a relay.
 		public init(
 			timeouts:Timeouts = Timeouts(),

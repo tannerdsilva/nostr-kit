@@ -35,7 +35,6 @@ extension Relay {
 			})
 		}
 
-
 		internal func handlerAdded(context: ChannelHandlerContext) {
 			#if DEBUG
 			self.logger.trace("added to pipeline.")
