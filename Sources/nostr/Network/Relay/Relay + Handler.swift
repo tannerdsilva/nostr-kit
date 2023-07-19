@@ -32,8 +32,9 @@ extension Relay {
 
 		/// the current frame handlers that are handling the frontline logistics of the various nostr messages
 		private var okHandler:OKHandler? = nil
+		private var authHandler:AUTHHandler? = nil
 
-		internal init(url:URL, configuration:Relay.Client.Configuration, types:NOSTR_frame_nametypes.Type, channel:Channel) {
+		internal init(url:URL, configuration:Relay.Client.Configuration, types:NOSTR_frame_nametypes.Type) {
 			var makeLogger = Self.logger
 			makeLogger[metadataKey:"url"] = "\(url)"
 			self.logger = makeLogger

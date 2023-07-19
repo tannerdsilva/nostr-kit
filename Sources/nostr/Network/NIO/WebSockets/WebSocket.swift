@@ -80,7 +80,7 @@ extension WebSocket {
 			
 			// start with the websocket handler.
 			let webSocketHandler = WebSocket.Handler(url:url, configuration:configuration)
-			let relayHandler = Relay.Handler(url:url, configuration:configuration, )
+			let relayHandler = Relay.Handler(url:url, configuration:configuration)
 			let catcher = Relay.Catcher()
 			let relay = Relay(url:url, channel:channel, handler:relayHandler, catcher:catcher)
 			upgradePromise = channel.pipeline.addHandlers([webSocketHandler, relayHandler, catcher])

@@ -38,9 +38,6 @@ public protocol NOSTR_event_signed_encrypted:NOSTR_event_signed {
 	/// the initialization vector used to encrypt the event
 	var iv:InitializationVector { get }
 
-	/// initialize a new instance of a signed and encrypted event based on the given signed event. specific means of derriving the the recipient and iv are left to the responsibility of the implementor in this function.
-	init(uid:Event.Signed.UID, sig:Event.Signed.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
-
 	/// decrypt the content of the event using the given recipient keypair.
 	func decryptContent(as recipient:KeyPair) throws -> String
 }
@@ -71,6 +68,10 @@ public protocol NOSTR_event_signed:Encodable, Decodable {
 
 	/// executes all of the work to verify if the instance's signature is valid.
 	func isSignatureValid() -> Bool
+}
+
+extension NOSTR_event_signed {
+	
 }
 
 /// default codable implementation

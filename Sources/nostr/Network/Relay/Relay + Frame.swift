@@ -1,13 +1,17 @@
 import NIO
 
 extension Relay {
-	internal struct Frame {
+	/// a container struct that is used to package and serialize contents into a relay frame.
+	internal struct EncodingFrame {
+		/// the identifying name of the frame (identifies the data that will follow)
 		internal let name:String
+
+		/// the contents of the frame following the name.
 		internal let contents:[any Codable]
 	}
 }
 
-extension Relay.Frame:Encodable {
+extension Relay.EncodingFrame:Encodable {
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.unkeyedContainer()
 		try container.encode(self.name)

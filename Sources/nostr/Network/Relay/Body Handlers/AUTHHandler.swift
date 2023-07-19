@@ -4,7 +4,7 @@ import class QuickJSON.Decoder
 
 extension Relay {
 
-	internal struct NIP42Handler:NOSTR_frame_body {
+	internal struct AUTHHandler:NOSTR_frame_handler {
 		#if DEBUG
 		internal static let logger = makeDefaultLogger(label:"nostr-net:relay-handler:AUTH", logLevel:.debug)
 		#endif
@@ -18,7 +18,7 @@ extension Relay {
 			case authenticated
 		}
 
-		internal enum Frame {
+		internal enum NOSTR_frame_TYPE:NOSTR_frame {
 			/// represents the challenge stage of the authentication scheme
 			/// - argument 1: the challenge string
 			case challenge(String)
@@ -26,9 +26,20 @@ extension Relay {
 			/// the assertion stage of the authentication scheme.
 			/// - argument 1: the signed authentication proof event
 			case assertion(nostr.Event.Signed)
-		}
 
-		private let encoder:QuickJSON.Encoder
+			/// the authentication has completed successfully.
+			var NOSTR_frame_name:String {
+				return "AUTH"
+			}
+			var NOSTR_frame_contents:[any Codable] {
+				switch self {
+					case .challenge(let challenge):
+						return [challenge]
+					case .assertion(let aResponse):
+						return [aResponse]
+				}
+			}
+		}
 
 		// allows us to register a handler for when the authentication is complete
 		private var okHandler:OKHandler
@@ -40,10 +51,9 @@ extension Relay {
 			self.keys = keys
 			self.okHandler = okHandler
 			self.url = relay
-			self.encoder = QuickJSON.Encoder()
 		}
 
-		static func parseBody(_ uk:inout UnkeyedDecodingContainer) throws -> Frame {
+		static func NOSTR_frame_handler_parse(_ uk:inout UnkeyedDecodingContainer) throws -> NOSTR_frame_TYPE {
 			do {
 				let challenge = try uk.decode(String.self)
 				return .challenge(challenge)
@@ -58,7 +68,7 @@ extension Relay {
 			}
 		}
 
-	    mutating func handleDecodedBody(_ decoded:Frame, context: NIOCore.ChannelHandlerContext) throws {
+	    mutating func NOSTR_frame_handle(_ decoded:NOSTR_frame_TYPE, context: NIOCore.ChannelHandlerContext) throws {
 			switch decoded {
 				case .challenge(let challengeString):
 					#if DEBUG
@@ -77,7 +87,7 @@ extension Relay {
 
 					#if DEBUG
 					let writePromise = context.eventLoop.makePromise(of:Void.self)
-					context.channel.write(Relay.Frame(name:"AUTH", contents:[makeAssertion]), promise:writePromise)
+					context.channel.write(Relay.EncodingFrame(name:"AUTH", contents:[makeAssertion]), promise:writePromise)
 					writePromise.futureResult.whenComplete { result in
 						switch result {
 							case .success(_):
