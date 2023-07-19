@@ -1,6 +1,8 @@
 // (c) tanner silva 2023. all rights reserved.
 
 public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
+	/// the underlying type that this filter is representing.
+	/// - this is used to natively encode and decode the events associated with this filter.
 	associatedtype NOSTR_filter_event_TYPE:NOSTR_event_signed
 
 	/// event uids to filter by
@@ -50,5 +52,9 @@ extension NOSTR_filter {
 			}
 		}
 		return false
+	}
+
+	func isEmpty() -> Bool {
+		return (self.uids == nil || self.uids!.count == 0) && (self.kinds == nil || self.kinds!.count == 0) && self.since == nil && self.until == nil && (self.authors == nil || self.authors!.count == 0)
 	}
 }

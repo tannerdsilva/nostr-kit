@@ -14,7 +14,7 @@
 
 	- Created an open ended protocol for expressing an unsigned event with mutable content: `NOSTR_event_unsigned`.
 
-	- Created an open ended protocol for expressing a signed event with mutable content: `NOSTR_event_signed`.
+	- Created an open ended protocol for expressing a signed event with immutable content: `NOSTR_event_signed`.
 
 	- Unit tests and `nostr-cc` updated to account for this new method for signing events.
 

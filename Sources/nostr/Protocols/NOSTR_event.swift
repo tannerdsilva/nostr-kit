@@ -43,7 +43,7 @@ public protocol NOSTR_event_signed_encrypted:NOSTR_event_signed {
 }
 
 /// a protocol for expressing a complete nostr event.
-public protocol NOSTR_event_signed:Encodable, Decodable {
+public protocol NOSTR_event_signed:Codable {
 	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
 	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
 
@@ -68,10 +68,6 @@ public protocol NOSTR_event_signed:Encodable, Decodable {
 
 	/// executes all of the work to verify if the instance's signature is valid.
 	func isSignatureValid() -> Bool
-}
-
-extension NOSTR_event_signed {
-	
 }
 
 /// default codable implementation

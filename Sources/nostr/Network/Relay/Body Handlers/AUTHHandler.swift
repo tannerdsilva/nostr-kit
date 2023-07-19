@@ -5,6 +5,7 @@ import class QuickJSON.Decoder
 extension Relay {
 
 	internal struct AUTHHandler:NOSTR_frame_handler {
+
 		#if DEBUG
 		internal static let logger = makeDefaultLogger(label:"nostr-net:relay-handler:AUTH", logLevel:.debug)
 		#endif
@@ -18,7 +19,7 @@ extension Relay {
 			case authenticated
 		}
 
-		internal enum NOSTR_frame_TYPE:NOSTR_frame {
+		fileprivate enum AuthStage {
 			/// represents the challenge stage of the authentication scheme
 			/// - argument 1: the challenge string
 			case challenge(String)
@@ -53,23 +54,22 @@ extension Relay {
 			self.url = relay
 		}
 
-		static func NOSTR_frame_handler_parse(_ uk:inout UnkeyedDecodingContainer) throws -> NOSTR_frame_TYPE {
+		internal mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
+			let authStage:AuthStage
 			do {
 				let challenge = try uk.decode(String.self)
-				return .challenge(challenge)
+				authStage = .challenge(challenge)
 			} catch QuickJSON.Decoder.Error.valueTypeMismatch(let mismatchInfo) {
 				switch mismatchInfo.found {
 					case .obj:
 						let aResponse = try uk.decode(nostr.Event.Signed.self)
-						return .assertion(aResponse)
+						authStage = .assertion(aResponse)
 					default:
 						throw QuickJSON.Decoder.Error.valueTypeMismatch(mismatchInfo)
 				}
 			}
-		}
 
-	    mutating func NOSTR_frame_handle(_ decoded:NOSTR_frame_TYPE, context: NIOCore.ChannelHandlerContext) throws {
-			switch decoded {
+			switch authStage {
 				case .challenge(let challengeString):
 					#if DEBUG
 					Self.logger.trace("got NIP-42 challenge string: \(challengeString)")

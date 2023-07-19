@@ -10,14 +10,8 @@ public protocol NOSTR_frame_types:ExpressibleByDictionaryLiteral {
 
 /// a protocol expression that allows programming objects to implement a custom frame body parser and handler.
 public protocol NOSTR_frame_handler {
-	/// the type that the body parser is decoding into.
-	associatedtype NOSTR_frame_TYPE:NOSTR_frame
-
-	/// the body parser.
-	static func NOSTR_frame_handler_parse(_ uk:inout UnkeyedDecodingContainer) throws -> NOSTR_frame_TYPE
-	
-	/// instance handler for the decoded body after it has been parsed by the static parse function.
-	mutating func NOSTR_frame_handle(_ decoded:NOSTR_frame_TYPE, context:NIOCore.ChannelHandlerContext) throws
+	/// the body parser and handler
+	mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:NIOCore.ChannelHandlerContext) throws
 }
 
 /// a protocol expression that allows programming objects to express a single frame instance

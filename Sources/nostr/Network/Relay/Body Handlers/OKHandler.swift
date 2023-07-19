@@ -8,18 +8,6 @@ import Logging
 
 extension Relay {
 	internal struct OKHandler:NOSTR_frame_handler {
-		internal struct NOSTR_frame_TYPE:NOSTR_frame {
-			let eventUID:Event.Signed.UID
-			let didSucceed:Bool
-			let message:String
-
-			let NOSTR_frame_name = "OK"
-
-			var NOSTR_frame_contents:[any Codable] {
-				return [self.eventUID, self.didSucceed, self.message]
-			}
-		}
-
 		#if DEBUG
 		internal let logger:Logger
 		#endif
@@ -38,23 +26,22 @@ extension Relay {
 		}
 
 		/// parse a given frame
-		internal static func NOSTR_frame_handler_parse(_ uk:inout UnkeyedDecodingContainer) throws -> NOSTR_frame_TYPE {
-			return NOSTR_frame_TYPE(eventUID:try uk.decode(Event.Signed.UID.self), didSucceed:try uk.decode(Bool.self), message:try uk.decode(String.self))
-		}
-
-		/// MUST be called within the event loop
-		internal mutating func NOSTR_frame_handle(_ decoded:NOSTR_frame_TYPE, context:NIOCore.ChannelHandlerContext) throws {
+		internal mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
+			let decUID = try uk.decode(Event.Signed.UID.self)
+			let didSuc = try uk.decode(Bool.self)
+			let gotMsg = try uk.decode(String.self)
+			
 			#if DEBUG
-			if decoded.didSucceed == true {
-				self.logger.debug("remote peer says 'ok'.", metadata: ["message": "\(decoded.message)", "success": "\(decoded.didSucceed)", "event_uid": "\(decoded.eventUID.description.prefix(8))"])
+			if didSuc == true {
+				self.logger.debug("remote peer says 'ok'.", metadata: ["message": "\(gotMsg)", "success": "\(didSuc)", "event_uid": "\(decUID.description.prefix(8))"])
 			} else {
-				self.logger.error("remote peer says 'not ok'.", metadata: ["message": "\(decoded.message)", "success": "\(decoded.didSucceed)", "event_uid": "\(decoded.eventUID.description.prefix(8))"])
+				self.logger.error("remote peer says 'not ok'.", metadata: ["message": "\(gotMsg)", "success": "\(didSuc)", "event_uid": "\(decUID.description.prefix(8))"])
 			}
 			#endif
 
 			// get the publishing struct
-			if let publishing = self.activePublishes[decoded.eventUID] {
-				switch decoded.didSucceed {
+			if let publishing = self.activePublishes[decUID] {
+				switch didSuc {
 					case true:
 						#if DEBUG
 						self.logger.trace("passing 'success' to found publishing struct...")
@@ -64,9 +51,9 @@ extension Relay {
 						#if DEBUG
 						self.logger.trace("passing 'failure' to found publishing struct...")
 						#endif
-						publishing.promise.fail(Publishing.Failure(message:decoded.message))
+						publishing.promise.fail(Publishing.Failure(message:gotMsg))
 				}
-				self.activePublishes.removeValue(forKey:decoded.eventUID)
+				self.activePublishes.removeValue(forKey:decUID)
 			}
 		}
 
