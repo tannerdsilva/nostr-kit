@@ -1,6 +1,6 @@
 // (c) tanner silva 2023. all rights reserved.
 
-public protocol NOSTR_tag_name:ExpressibleByStringLiteral {
+public protocol NOSTR_tag_name:ExpressibleByStringLiteral, Hashable, Equatable {
 	associatedtype NOSTR_tag_name_ERROR_zerolength:Swift.Error = nostr.Event.Tag.Name.ZeroLengthError
 
 	/// represents the nostr tag name as a string representation.

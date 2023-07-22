@@ -29,8 +29,34 @@ public struct Filter {
 	}
 }
 
-extension nostr.Filter:NOSTR_filter {
+extension Filter:NOSTR_filter {
+    public var genericTags: [Character : [any NOSTR_tag_index]]? {
+        return self.genericTags
+    }
+
     public typealias NOSTR_filter_event_TYPE = nostr.Event.Signed
+
+	public var NOSTR_filter_uids:Set<Event.Signed.UID>? {
+		return self.uids
+	}
+	public var NOSTR_filter_kinds:Set<nostr.Event.Kind>? {
+		return self.kinds
+	}
+	public var NOSTR_filter_since:Date? {
+		return self.since
+	}
+	public var NOSTR_filter_until:Date? {
+		return self.until
+	}
+	public var NOSTR_filter_limit:UInt32? {
+		return self.limit
+	}
+	public var NOSTR_filter_authors:Set<nostr.PublicKey>? {
+		return self.authors
+	}
+	public var NOSTR_filter_tags:[String:[any NOSTR_tag_index]]? {
+		return self.tags
+	}
 }
 
 extension Filter:Codable {

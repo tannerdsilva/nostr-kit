@@ -13,7 +13,7 @@ extension Relay {
 	internal final class Handler:ChannelDuplexHandler, RemovableChannelHandler {
 		internal typealias InboundIn = ByteBuffer
 		internal typealias InboundOut = Message<nostr.Event.Signed>
-		internal typealias OutboundIn = Frame
+		internal typealias OutboundIn = EncodingFrame
 		internal typealias OutboundOut = ByteBuffer
 
 		internal static let logger = makeDefaultLogger(label:"nostr-net:relay-handler", logLevel:.info)
@@ -30,11 +30,14 @@ extension Relay {
 		private let url:URL
 		private var configuration:Relay.Client.Configuration
 
+		private let channel:Channel
+
 		/// the current frame handlers that are handling the frontline logistics of the various nostr messages
+		private let handlers:[String:any NOSTR_frame_handler.Type]
 		private var okHandler:OKHandler? = nil
 		private var authHandler:AUTHHandler? = nil
 
-		internal init(url:URL, configuration:Relay.Client.Configuration, types:NOSTR_frame_nametypes.Type) {
+		internal init(url:URL, configuration:Relay.Client.Configuration, channel:Channel, types:[String:any NOSTR_frame_handler.Type]) {
 			var makeLogger = Self.logger
 			makeLogger[metadataKey:"url"] = "\(url)"
 			self.logger = makeLogger
@@ -44,6 +47,8 @@ extension Relay {
 			#if DEBUG
 			makeLogger.trace("instance initialized.")
 			#endif
+			self.channel = channel
+			self.handlers = types
 		}
 
 		internal func handlerAdded(context: ChannelHandlerContext) {
@@ -93,9 +98,6 @@ extension Relay {
 				#if DEBUG
 				self.logger.trace("got message.", metadata: ["message": "\(capMessage)"])
 				#endif
-
-				
-
 			} catch let error {
 				#if DEBUG
 				self.logger.error("failed to decode inbound json message.", metadata: ["error": "\(error)"])
@@ -127,10 +129,9 @@ extension Relay {
 }
 
 extension Relay.Handler {
-	internal func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.Signed.UID) {
-		self.channel.eventLoop.submit {
+	internal func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.Signed.UID) -> EventLoopFuture<Void> {
+		return self.channel.eventLoop.submit {
 			self.okHandler!.addPublishingStruct(publishing, for:evUID)
 		}
 	}
-
 }

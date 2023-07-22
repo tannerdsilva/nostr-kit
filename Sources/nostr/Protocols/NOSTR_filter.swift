@@ -18,6 +18,8 @@ public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
 	/// returned events must be authored by one of these public keys
 	var authors:Set<nostr.PublicKey>? { get }
 
+	var genericTags:[Character:[any NOSTR_tag_index]]? { get }
+
 	/// determines if the given event matches the filter (requires that the event and filter events are of the same kind type)
 	func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE
 	/// returns true if the filter is empty (contains no criteria)
@@ -25,7 +27,7 @@ public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
 }
 
 extension NOSTR_filter {
-	func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE {
+	public func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE {
 		if let uids = self.uids {
 			if uids.contains(event.uid) {
 				return true
@@ -54,7 +56,7 @@ extension NOSTR_filter {
 		return false
 	}
 
-	func isEmpty() -> Bool {
+	public func isEmpty() -> Bool {
 		return (self.uids == nil || self.uids!.count == 0) && (self.kinds == nil || self.kinds!.count == 0) && self.since == nil && self.until == nil && (self.authors == nil || self.authors!.count == 0)
 	}
 }

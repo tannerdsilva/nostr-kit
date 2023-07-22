@@ -23,6 +23,7 @@ extension Relay {
 			#if DEBUG
 			self.logger = makeDefaultLogger(label:"nostr-net:frame-handler:OK", url:url, logLevel:.debug)
 			#endif
+			self.url = url
 		}
 
 		/// parse a given frame

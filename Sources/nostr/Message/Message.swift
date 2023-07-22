@@ -121,8 +121,6 @@ extension Relay.Message:Codable {
 			case "EOSE":
 				let subID = try container.decode(String.self)
 				self = .endOfStoredEvents(subID)
-			case "AUTH":
-				
 			case "OK":
 				let proof = try container.decode(Event.Signed.UID.self)
 				let didSucceed = try container.decode(Bool.self)
@@ -153,14 +151,6 @@ extension Relay.Message:Codable {
 			case .endOfStoredEvents(let subID):
 				try container.encode("EOSE")
 				try container.encode(subID)
-			case .authentication(let aStage):
-				try container.encode("AUTH")
-				switch aStage {
-					case .challenge(let chal):
-						try container.encode(chal)
-					case .assertion(let proof):
-						try container.encode(proof)
-				}
 			case .notice(let chal):
 				try container.encode("NOTICE")
 				try container.encode(chal)
