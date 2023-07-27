@@ -19,7 +19,7 @@ extension Relay {
 			case authenticated
 		}
 
-		fileprivate enum AuthStage {
+		fileprivate enum AuthStage:NOSTR_frame {
 			/// represents the challenge stage of the authentication scheme
 			/// - argument 1: the challenge string
 			case challenge(String)

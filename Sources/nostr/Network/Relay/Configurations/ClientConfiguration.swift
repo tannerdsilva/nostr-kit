@@ -42,6 +42,9 @@ extension Relay.Client {
 		/// the tls configuration for this relay
 		public var tlsConfiguration:TLSConfiguration
 
+		/// the amount of time that an inbound event will be held before being sent to the user.
+		public var eventHoldTime:TimeAmount = .milliseconds(25)
+
 		/// initialize a new configuration for a relay.
 		public init(
 			timeouts:Timeouts = Timeouts(),

@@ -22,22 +22,29 @@ extension Relay {
 		private var encoder:QuickJSON.Encoder? = nil
 		private var decoder:QuickJSON.Decoder? = nil
 		private var pool:MemoryPool? = nil
-		private var decoderPointer:UnsafeMutableRawPointer? = nil
-		// pointer to a buffer that is used to decode inbound data
+		private var decoderPointer:UnsafeMutableRawPointer? = nil	// pointer to a buffer that is used to decode inbound data
+
 
 		private let decodingFlags:QuickJSON.Decoder.Flags
 		private let logger:Logger
+
+		/// the url to the remote peer
 		private let url:URL
+
+		/// the configuration that this handler is operating with
 		private var configuration:Relay.Client.Configuration
 
+		/// the channel that this handler is attached to
 		private let channel:Channel
 
 		/// the current frame handlers that are handling the frontline logistics of the various nostr messages
-		private let handlers:[String:any NOSTR_frame_handler.Type]
+		private let handlers:[String:any NOSTR_frame_handler]
+		/// typed reference for the OK frame handler. this is also stored in `handlers` but this is a convenience variable
 		private var okHandler:OKHandler? = nil
+		/// typed reference for the AUTH frame handler. this is also stored in `handlers` but this is a convenience variable
 		private var authHandler:AUTHHandler? = nil
 
-		internal init(url:URL, configuration:Relay.Client.Configuration, channel:Channel, types:[String:any NOSTR_frame_handler.Type]) {
+		internal init(url:URL, configuration:Relay.Client.Configuration, channel:Channel, handlers:[String:any NOSTR_frame_handler]) {
 			var makeLogger = Self.logger
 			makeLogger[metadataKey:"url"] = "\(url)"
 			self.logger = makeLogger
@@ -48,18 +55,21 @@ extension Relay {
 			makeLogger.trace("instance initialized.")
 			#endif
 			self.channel = channel
-			self.handlers = types
+			self.handlers = handlers
+			self.okHandler = handlers["OK"] as? Relay.OKHandler
+			self.authHandler = handlers["AUTH"] as? Relay.AUTHHandler
 		}
 
 		internal func handlerAdded(context: ChannelHandlerContext) {
 			let recommendedSize = QuickJSON.MemoryPool.maxReadSize(inputSize:self.configuration.limits.maxWebSocketFrameSize, flags:QuickJSON.Decoder.Flags())
 			#if DEBUG
-			self.logger.info("relay connected.", metadata: ["parse_buff_size": "\(recommendedSize) bytes"])
+			defer {
+				self.logger.info("relay connected.", metadata: ["parse_buff_size": "\(recommendedSize) bytes"])
+			}
 			#endif
 
 			// this malloc is freed in handlerRemoved
 			self.decoderPointer = malloc(recommendedSize)
-
 			do {
 				let memPool = try QuickJSON.MemoryPool.allocate(staticSize:recommendedSize, staticBuffer: self.decoderPointer!)
 				self.decoder = QuickJSON.Decoder(memory:memPool)
@@ -74,7 +84,9 @@ extension Relay {
 		
 		internal func handlerRemoved(context:ChannelHandlerContext) {
 			#if DEBUG
-			self.logger.trace("relay disconnected.")
+			defer {
+				self.logger.trace("relay disconnected.")
+			}
 			#endif
 			self.decoder = nil
 			self.encoder = nil
@@ -84,6 +96,7 @@ extension Relay {
 
 			self.decoderPointer = nil
 			self.pool = nil
+			
 		}
 
 		internal func channelRead(context: ChannelHandlerContext, data: NIOAny) {

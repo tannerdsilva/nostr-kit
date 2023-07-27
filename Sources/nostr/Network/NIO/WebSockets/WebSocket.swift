@@ -81,10 +81,10 @@ extension WebSocket {
 			// start with the websocket handler.
 			let webSocketHandler = WebSocket.Handler(url:url, configuration:configuration)
 			let relayHandler = Relay.Handler(url:url, configuration:configuration, channel:channel, types:[
-				"AUTH":Relay.AUTHHandler.self, 
-				"OK":Relay.OKHandler.self, 
-				"EVENT":Relay.EVENTHandler.self, 
-				// "NOTICE":NoticeHandler.self,
+				"AUTH":Relay.AUTHHandler.self,
+				"OK":Relay.OKHandler.self,
+				"EVENT":Relay.EVENTHandler.self,
+				"NOTICE":Relay.NOTICEHandler.self,
 				"EOSE":Relay.EOSEHandler.self
 			])
 			let catcher = Relay.Catcher()
