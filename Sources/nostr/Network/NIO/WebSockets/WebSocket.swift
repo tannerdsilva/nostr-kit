@@ -6,7 +6,6 @@ import struct NIOHTTP1.HTTPHeaders
 import typealias NIOHTTP1.NIOHTTPClientUpgradeConfiguration
 
 import NIOPosix
-import ExtrasBase64
 
 import Logging
 
@@ -78,15 +77,23 @@ extension WebSocket {
 			// the return value of this function will be used as an indicator of how long the inbound data should be buffered for (the buffer will be released after the promise is fufilled)
 			var upgradePromise:EventLoopFuture<Void>
 			
+			var buildHandlers = [String:any NOSTR_frame_handler]()
+			let okHandler = Relay.OKHandler(url:url)
+			buildHandlers["OK"] = okHandler
+			let eoseHandler = Relay.EOSEHandler()
+			buildHandlers["EOSE"] = eoseHandler
+			let noticeHandler = Relay.NOTICEHandler()
+			buildHandlers["NOTICE"] = noticeHandler
+			let eventHandler = Relay.EVENTHandler(configuration:configuration, eoseHandler: eoseHandler)
+			buildHandlers["EVENT"] = eventHandler
+			if configuration.authenticationKey != nil {
+				let authHandler = Relay.AUTHHandler(keys:configuration.authenticationKey!, relay:url, okHandler:okHandler, channel:channel)
+				buildHandlers["AUTH"] = authHandler
+			}
+			
 			// start with the websocket handler.
 			let webSocketHandler = WebSocket.Handler(url:url, configuration:configuration)
-			let relayHandler = Relay.Handler(url:url, configuration:configuration, channel:channel, types:[
-				"AUTH":Relay.AUTHHandler.self,
-				"OK":Relay.OKHandler.self,
-				"EVENT":Relay.EVENTHandler.self,
-				"NOTICE":Relay.NOTICEHandler.self,
-				"EOSE":Relay.EOSEHandler.self
-			])
+			let relayHandler = Relay.Handler(url:url, configuration:configuration, channel:channel, handlers:buildHandlers)
 			let catcher = Relay.Catcher()
 			let relay = Relay(url:url, channel:channel, handler:relayHandler, catcher:catcher)
 			upgradePromise = channel.pipeline.addHandlers([webSocketHandler, relayHandler, catcher])

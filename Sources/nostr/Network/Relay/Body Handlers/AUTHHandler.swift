@@ -14,9 +14,9 @@ extension Relay {
 			/// the client has not yet authenticated with the relay
 			case unauthenticated
 			/// the client is in the process of authenticating with the relay
-			case authenticating
+			case authenticating(EventLoopPromise<Date>)
 			/// the client is authenticated
-			case authenticated
+			case authenticated(Date)
 		}
 
 		fileprivate enum AuthStage:NOSTR_frame {
@@ -48,10 +48,13 @@ extension Relay {
 		internal let url:URL
 		fileprivate let keys:KeyPair
 
-		internal init(keys:KeyPair, relay:URL, okHandler:OKHandler, channel:Channel) {
+		internal var stateHandler:(State) -> Void
+
+		internal init(keys:KeyPair, relay:URL, okHandler:OKHandler, channel:Channel, stateHandler:@escaping (State) -> Void) {
 			self.keys = keys
 			self.okHandler = okHandler
 			self.url = relay
+			self.stateHandler = stateHandler
 		}
 
 		internal mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
@@ -82,25 +85,23 @@ extension Relay {
 					Self.logger.trace("successfully signed assertion: \(makeAssertion.uid.hexEncodedString().prefix(8))")
 					#endif
 
-					let newPublishing = Publishing(relay:url, event:makeAssertion.uid, channel:context.channel)
-					self.okHandler.addPublishingStruct(newPublishing, for:makeAssertion.uid)
-
-					#if DEBUG
 					let writePromise = context.eventLoop.makePromise(of:Void.self)
 					context.channel.write(Relay.EncodingFrame(name:"AUTH", contents:[makeAssertion]), promise:writePromise)
-					writePromise.futureResult.whenComplete { result in
+					writePromise.futureResult.whenComplete { [sh = self.stateHandler, okh = self.okHandler] result in
 						switch result {
 							case .success(_):
+								#if DEBUG
 								Self.logger.info("sent nip-42 auth assertion.", metadata: ["response_uid":"\(makeAssertion.uid.description.prefix(8))"])
+								#endif
+								let promise = okh.createNIP20Promise(for:makeAssertion.uid)
+								sh(.authenticating(promise))
+								
 							case .failure(let error):
 								Self.logger.error("failed to send nip-42 auth assertion.", metadata: ["response_uid": "\(makeAssertion.uid.description.prefix(8))", "error": "\(error)"])
 						}
 					}
-					#else
-					context.channel.write(Relay.Frame(name:"AUTH", contents:[makeAssertion]), promise:nil)
-					#endif
 				default:
-				fatalError("not supported")
+				fatalError("authentication assetion events not supported on this socket")
 			}
 		}
 	}

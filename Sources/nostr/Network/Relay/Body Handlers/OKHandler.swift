@@ -1,29 +1,36 @@
-import class NIO.ChannelHandlerContext
-import class NIO.EventLoopFuture
 import class QuickJSON.Encoder
+
+import NIO
 
 #if DEBUG
 import Logging
 #endif 
 
 extension Relay {
-	internal struct OKHandler:NOSTR_frame_handler {
+
+	/// the OK frame handler.
+	/// - manages the OK frames that are sent by the remote peer for each event instance
+	/// - also manages the timeouts for each event instance and their executions
+	internal class OKHandler:NOSTR_frame_handler {
 		#if DEBUG
 		internal let logger:Logger
 		#endif
 
 		private let url:URL
 
+		private let channel:Channel
+
 		/// publishing structs that are currently waiting for an ok response.
 		/// - see NIP-20 for more information.
-		private var activePublishes:[Event.Signed.UID:Publishing]
+		private var activePublishes:[Event.Signed.UID:EventLoopPromise<Date>]
 
-		internal init(url:URL) {
+		internal init(url:URL, channel:Channel) {
 			self.activePublishes = [:]
 			#if DEBUG
 			self.logger = makeDefaultLogger(label:"nostr-net:frame-handler:OK", url:url, logLevel:.debug)
 			#endif
 			self.url = url
+			self.channel = channel
 		}
 
 		/// parse a given frame
@@ -47,20 +54,24 @@ extension Relay {
 						#if DEBUG
 						self.logger.trace("passing 'success' to found publishing struct...")
 						#endif
-						publishing.promise.succeed(Date())
+						publishing.succeed(Date())
 					case false:
 						#if DEBUG
 						self.logger.trace("passing 'failure' to found publishing struct...")
 						#endif
-						publishing.promise.fail(Publishing.Failure(message:gotMsg))
+						publishing.fail(Publishing.Failure(message:gotMsg))
 				}
 				self.activePublishes.removeValue(forKey:decUID)
 			}
 		}
 
-		/// MUST be called within the event loop.
-		internal mutating func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.Signed.UID) {
-			activePublishes[evUID] = publishing
+		internal mutating func createNIP20Promise(for eventUID:Event.Signed.UID) -> EventLoopPromise<Date> {
+			let promise = self.channel.eventLoop.makePromise(of:Date.self)
+			self.activePublishes[eventUID] = promise
+			#if DEBUG
+			self.logger.debug("registered new publishing struct for event uid '\(eventUID.description.prefix(8))'.")
+			#endif
+			return promise
 		}
 	}
 }
