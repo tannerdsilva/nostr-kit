@@ -17,7 +17,7 @@ import struct NIOCore.NIOInsecureNoTLS
 /// the primary struct for the WebSocket connection
 internal struct WebSocket {
 	/// the URL type for WebSocket
-	internal static let logger = makeDefaultLogger(label:"net-websocket", logLevel:.debug)
+	internal static let logger = makeDefaultLogger(label:"net-websocket", logLevel:.trace)
 }
 
 extension WebSocket {
@@ -56,7 +56,6 @@ extension WebSocket {
 		let upgradePromise = eventLoop.makePromise(of: Void.self)
 		upgradePromise.futureResult.cascadeFailure(to: wsPromise)
 
-
 		// light up the timeout task.
 		let timeoutTask = channel.eventLoop.scheduleTask(in: configuration.timeouts.websocketUpgradeTimeout) {
 			// the timeout task fired. fail the upgrade promise.
@@ -72,13 +71,12 @@ extension WebSocket {
 
 		// build the websocket upgrader.
 		let websocketUpgrader = WebSocket.Upgrader(surl:splitURL, url:url, requestKey:base64Key, maxWebSocketFrameSize:configuration.limits.maxWebSocketFrameSize, upgradePromise:upgradePromise) { (channel, _) -> EventLoopFuture<Void> in
-			
 			// upgrade successful. build the nostr data channel.
 			// the return value of this function will be used as an indicator of how long the inbound data should be buffered for (the buffer will be released after the promise is fufilled)
 			var upgradePromise:EventLoopFuture<Void>
 			
 			var buildHandlers = [String:any NOSTR_frame_handler]()
-			let okHandler = Relay.OKHandler(url:url)
+			let okHandler = Relay.OKHandler(url:url, channel:channel)
 			buildHandlers["OK"] = okHandler
 			let eoseHandler = Relay.EOSEHandler()
 			buildHandlers["EOSE"] = eoseHandler
@@ -87,7 +85,7 @@ extension WebSocket {
 			let eventHandler = Relay.EVENTHandler(configuration:configuration, eoseHandler: eoseHandler)
 			buildHandlers["EVENT"] = eventHandler
 			if configuration.authenticationKey != nil {
-				let authHandler = Relay.AUTHHandler(keys:configuration.authenticationKey!, relay:url, okHandler:okHandler, channel:channel)
+				let authHandler = Relay.AUTHHandler(keys:configuration.authenticationKey!, relay:url, okHandler:okHandler, stateHandler: { newState in return })
 				buildHandlers["AUTH"] = authHandler
 			}
 			

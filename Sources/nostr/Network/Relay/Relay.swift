@@ -20,6 +20,7 @@ public struct Relay {
 
 	/// the relay handler. this is the primary interface for general purpose 
 	internal let handler:Relay.Handler
+	internal let okHandler:OKHandler
 	internal let catcher:Relay.Catcher
 
 	/// the internal initializer for a relay.
@@ -27,23 +28,34 @@ public struct Relay {
 		self.url = url
 		self.channel = channel
 		self.handler = handler
+		self.okHandler = handler.okHandler
 		self.catcher = catcher
 	}
 
-	public func write(event:nostr.Event.Signed) -> EventLoopFuture<Publishing> {
-		let pubPromise = channel.eventLoop.makePromise(of:Publishing.self)
-		let publishing = Publishing(relay:self.url, event:event.uid, channel:channel)
-		// self.handler.ok
-		self.handler.addPublishingStruct(publishing, for:event.uid).whenComplete({
+	public func write<E>(event:E) -> EventLoopFuture<Date> where E:NOSTR_event_signed {
+		// the promise that ties to the NIP-20 response for the published event
+		let returnPromise = self.handler.okHandler.createNIP20Promise(for:event.uid)
+		
+		// the promise that ties to the write operation
+		let writePromise = self.channel.eventLoop.makePromise(of:Void.self)
+		writePromise.futureResult.whenComplete {
 			switch $0 {
-				case .success():
-				let writeFuture = channel.write(nostr.Relay.Message.event(.write(event)))
-				pubPromise.completeWith(writeFuture.map({ publishing }))
-				case .failure(let error):
-				pubPromise.fail(error)
+				case .success(_):
+					#if DEBUG
+					Self.logger.trace("successfully wrote event to relay.", metadata:["event_uid": "\(event.uid.description.prefix(8))"])
+					#endif
+					
+					
+				case .failure(let err):
+					#if DEBUG
+					Self.logger.error("failed to write event to relay.", metadata:["error": "\(err)", "event_uid": "\(event.uid.description.prefix(8))"])
+					#endif
 			}
-		})
-		return pubPromise.futureResult
+		}
+		writePromise.futureResult.cascadeFailure(to:returnPromise)
+		self.channel.write(event.NOSTR_frame_encode(), promise:writePromise)
+		
+		return returnPromise.futureResult
 	}
 
 }

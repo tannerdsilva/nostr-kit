@@ -68,8 +68,8 @@ extension CLI {
 				unsignedEvent.content = myMessage
 				let newEvent = try unsignedEvent.sign(type:nostr.Event.Signed.self, as:readKey)
 				CLI.logger.info("posting event: \(newEvent.uid.description.prefix(8))")
-				let result = try await relayConn.write(event:newEvent).get()
-				result.promise.futureResult.whenComplete { getResult in
+				let result = relayConn.write(event:newEvent)
+				result.whenComplete { getResult in
 					switch getResult {
 						case .success(let event):
 							CLI.logger.info("successfully posted event: \(newEvent.uid.description.prefix(8))")
@@ -77,9 +77,7 @@ extension CLI {
 							print("event failed: \(error)")
 					}
 				}
-				_ = try await result.promise.futureResult.get()
-				// var config = nostr.Relay.Configuration(authenticationKey:
-				// let relay = try nostr.Relay.connect(url:try nostr.Relay.URL(url))
+				_ = try await result.get()
 			}
 		}
 	}

@@ -40,9 +40,9 @@ extension Relay {
 		/// the current frame handlers that are handling the frontline logistics of the various nostr messages
 		private let handlers:[String:any NOSTR_frame_handler]
 		/// typed reference for the OK frame handler. this is also stored in `handlers` but this is a convenience variable
-		private var okHandler:OKHandler? = nil
+		internal var okHandler:OKHandler
 		/// typed reference for the AUTH frame handler. this is also stored in `handlers` but this is a convenience variable
-		private var authHandler:AUTHHandler? = nil
+		internal var authHandler:AUTHHandler? = nil
 
 		internal init(url:URL, configuration:Relay.Client.Configuration, channel:Channel, handlers:[String:any NOSTR_frame_handler]) {
 			var makeLogger = Self.logger
@@ -56,7 +56,7 @@ extension Relay {
 			#endif
 			self.channel = channel
 			self.handlers = handlers
-			self.okHandler = handlers["OK"] as? Relay.OKHandler
+			self.okHandler = handlers["OK"] as! Relay.OKHandler
 			self.authHandler = handlers["AUTH"] as? Relay.AUTHHandler
 		}
 
@@ -137,14 +137,6 @@ extension Relay {
 				#endif
 				context.fireErrorCaught(error)
 			}
-		}
-	}
-}
-
-extension Relay.Handler {
-	internal func addPublishingStruct(_ publishing:Relay.Publishing, for evUID:Event.Signed.UID) -> EventLoopFuture<Void> {
-		return self.channel.eventLoop.submit {
-			self.okHandler!.addPublishingStruct(publishing, for:evUID)
 		}
 	}
 }

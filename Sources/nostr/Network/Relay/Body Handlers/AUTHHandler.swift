@@ -50,7 +50,7 @@ extension Relay {
 
 		internal var stateHandler:(State) -> Void
 
-		internal init(keys:KeyPair, relay:URL, okHandler:OKHandler, channel:Channel, stateHandler:@escaping (State) -> Void) {
+		internal init(keys:KeyPair, relay:URL, okHandler:OKHandler, stateHandler:@escaping (State) -> Void) {
 			self.keys = keys
 			self.okHandler = okHandler
 			self.url = relay
@@ -97,7 +97,9 @@ extension Relay {
 								sh(.authenticating(promise))
 								
 							case .failure(let error):
+								#if DEBUG
 								Self.logger.error("failed to send nip-42 auth assertion.", metadata: ["response_uid": "\(makeAssertion.uid.description.prefix(8))", "error": "\(error)"])
+								#endif
 						}
 					}
 				default:

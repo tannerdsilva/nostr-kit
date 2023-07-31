@@ -7,6 +7,10 @@ import Logging
 #endif 
 
 extension Relay {
+	/// thrown when a publish failes, with a message describing the failure if provided.
+	public struct PublishFailure:Swift.Error {
+		public let message:String
+	}
 
 	/// the OK frame handler.
 	/// - manages the OK frames that are sent by the remote peer for each event instance
@@ -34,7 +38,8 @@ extension Relay {
 		}
 
 		/// parse a given frame
-		internal mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
+		internal func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
+			// complete decoding
 			let decUID = try uk.decode(Event.Signed.UID.self)
 			let didSuc = try uk.decode(Bool.self)
 			let gotMsg = try uk.decode(String.self)
@@ -47,7 +52,7 @@ extension Relay {
 			}
 			#endif
 
-			// get the publishing struct
+			// get the promise
 			if let publishing = self.activePublishes[decUID] {
 				switch didSuc {
 					case true:
@@ -59,19 +64,28 @@ extension Relay {
 						#if DEBUG
 						self.logger.trace("passing 'failure' to found publishing struct...")
 						#endif
-						publishing.fail(Publishing.Failure(message:gotMsg))
+						publishing.fail(PublishFailure(message:gotMsg))
 				}
 				self.activePublishes.removeValue(forKey:decUID)
 			}
 		}
 
-		internal mutating func createNIP20Promise(for eventUID:Event.Signed.UID) -> EventLoopPromise<Date> {
+		internal func createNIP20Promise(for eventUID:Event.Signed.UID) -> EventLoopPromise<Date> {
 			let promise = self.channel.eventLoop.makePromise(of:Date.self)
 			self.activePublishes[eventUID] = promise
 			#if DEBUG
 			self.logger.debug("registered new publishing struct for event uid '\(eventUID.description.prefix(8))'.")
 			#endif
 			return promise
+		}
+
+		/// cancel an existing NIP-20 promise. avoid using this function where possible. a NIP20 promise should not be created until it is certain that it is needed.
+		internal func cancelNIP20Promise(for eventUID:Event.Signed.UID) -> EventLoopPromise<Date> {
+			let getPromise = self.activePublishes.removeValue(forKey:eventUID)!
+			#if DEBUG
+			self.logger.debug("canceled promise for event uid '\(eventUID.description.prefix(8))'.")
+			#endif
+			return getPromise
 		}
 	}
 }

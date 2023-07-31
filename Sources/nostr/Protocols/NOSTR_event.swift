@@ -43,7 +43,7 @@ public protocol NOSTR_event_signed_encrypted:NOSTR_event_signed {
 }
 
 /// a protocol for expressing a complete nostr event.
-public protocol NOSTR_event_signed:Codable {
+public protocol NOSTR_event_signed:Codable, NOSTR_frame_encodable {
 	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
 	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
 
@@ -70,7 +70,7 @@ public protocol NOSTR_event_signed:Codable {
 	func isSignatureValid() -> Bool
 }
 
-/// default codable implementation
+// default codable implementation
 extension NOSTR_event_signed {
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: nostr.Event.CodingKeys.self)
@@ -139,6 +139,7 @@ extension NOSTR_event_unsigned {
 	}
 }
 
+// default signature validation implementation
 extension NOSTR_event_signed {
 	public func isSignatureValid() -> Bool {
 		do {
@@ -174,5 +175,12 @@ extension NOSTR_event_signed {
 		} catch {
 			return false
 		}
+	}
+}
+
+// default frame encoding implementation
+extension NOSTR_event_signed {
+	public func NOSTR_frame_encode() -> Relay.EncodingFrame {
+		return Relay.EncodingFrame(name:"EVENT", contents:[self])
 	}
 }

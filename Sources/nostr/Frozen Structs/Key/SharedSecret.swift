@@ -21,11 +21,9 @@ extension SharedSecret {
 		guard secp256k1_ec_pubkey_parse(secp256k1.Context.raw, &pubkey, publicBytes, publicBytes.count) == 1 else {
 			throw Error.invalidPublicKey
 		}
-		// try withUnsafeMutablePointer(to:&bytes) { ptr in
-			guard secp256k1_ecdh(secp256k1.Context.raw, &bytes, &pubkey, secretBytes, { (output, x32, _, _) in memcpy(output, x32, 32); return 1; }, nil) == 1 else {
-				throw Error.invalidPublicKey
-			}
-		// }
+		guard secp256k1_ecdh(secp256k1.Context.raw, &bytes, &pubkey, secretBytes, { (output, x32, _, _) in memcpy(output!, x32!, 32); return 1; }, nil) == 1 else {
+			throw Error.invalidPublicKey
+		}
 	}
 }
 
@@ -39,6 +37,7 @@ extension SharedSecret:RAW_convertible {
 		}
 		_ = memcpy(&bytes, value.mv_data, MemoryLayout<Self>.size)
 	}
+	/// convert to raw bytes.
 	public func asRAW_val<R>(_ valFunc: (inout RAW_val) throws -> R) rethrows -> R {
 		return try withUnsafePointer(to:bytes, { unsafePointer in
 			var val = RAW_val(mv_size:MemoryLayout<Self>.size, mv_data: UnsafeMutableRawPointer(mutating: unsafePointer))
