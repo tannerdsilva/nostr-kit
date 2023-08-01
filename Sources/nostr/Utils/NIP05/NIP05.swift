@@ -107,8 +107,7 @@ public struct NIP05 {
 		}
 
 		// decode the response
-		let decoder = QuickJSON.Decoder()
-		let decodedResponse = try decoder.decode(Response.self, from:responseBytesRead)
+		let decodedResponse = try QuickJSON.decode(Response.self, from:responseBytesRead, size:responseBytesRead.count)
 		return decodedResponse
 	}
 }

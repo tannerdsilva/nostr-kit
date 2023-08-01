@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/tannerdsilva/QuickJSON.git",
       "state" : {
-        "revision" : "fae445b812ea63b34bbd7ed352cde21a6ae7cbbb",
-        "version" : "0.1.1"
+        "revision" : "cfc5d2bc2e258fadb32d4684aea360fdc0c8a3cc",
+        "version" : "1.0.2"
       }
     },
     {

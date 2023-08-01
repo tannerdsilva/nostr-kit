@@ -1,4 +1,4 @@
-import class QuickJSON.Encoder
+import QuickJSON
 
 import NIO
 

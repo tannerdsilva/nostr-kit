@@ -17,7 +17,7 @@ import struct NIOCore.NIOInsecureNoTLS
 /// the primary struct for the WebSocket connection
 internal struct WebSocket {
 	/// the URL type for WebSocket
-	internal static let logger = makeDefaultLogger(label:"net-websocket", logLevel:.trace)
+	internal static let logger = makeDefaultLogger(label:"net-websocket", logLevel:.debug)
 }
 
 extension WebSocket {

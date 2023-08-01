@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
 // used to generate json commitments
-import class QuickJSON.Encoder
+import QuickJSON
 // used to compute the sha256 hash of the commitment
 import struct Crypto.SHA256
 // used to generate the event signature
@@ -106,9 +106,8 @@ extension NOSTR_event_signed {
 extension NOSTR_event_unsigned {
 	public mutating func sign<S>(type signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
 		// generate the commitment bytes
-		let encoder = QuickJSON.Encoder()
 		let commit = Event.Commitment(unsigned:&self, author:author)
-		let commitmentBytes = try encoder.encode(commit)
+		let commitmentBytes = try QuickJSON.encode(commit)
 		
 		// generate the uid based on the commitment
 		var hasher = SHA256()
@@ -145,8 +144,7 @@ extension NOSTR_event_signed {
 		do {
 			// generate the commitment bytes
 			let newComm = nostr.Event.Commitment(signed:self)
-			let encoder = QuickJSON.Encoder()
-			let commBytes = try encoder.encode(newComm)
+			let commBytes = try QuickJSON.encode(newComm)
 
 			// hash the commitment
 			let raw_id = SHA256.hash(Array(commBytes)).asRAW_val { shaHash in

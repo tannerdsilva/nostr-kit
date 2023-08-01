@@ -1,6 +1,5 @@
 import NIO
-import class QuickJSON.Encoder
-import class QuickJSON.Decoder
+import QuickJSON
 
 extension Relay {
 
@@ -14,7 +13,7 @@ extension Relay {
 			/// the client has not yet authenticated with the relay
 			case unauthenticated
 			/// the client is in the process of authenticating with the relay
-			case authenticating(EventLoopPromise<Date>)
+			case authenticating(EventLoopPromise<Date>?)
 			/// the client is authenticated
 			case authenticated(Date)
 		}
@@ -57,18 +56,18 @@ extension Relay {
 			self.stateHandler = stateHandler
 		}
 
-		internal mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
+		internal func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:ChannelHandlerContext) throws {
 			let authStage:AuthStage
 			do {
 				let challenge = try uk.decode(String.self)
 				authStage = .challenge(challenge)
-			} catch QuickJSON.Decoder.Error.valueTypeMismatch(let mismatchInfo) {
+			} catch QuickJSON.Decoding.Error.valueTypeMismatch(let mismatchInfo) {
 				switch mismatchInfo.found {
 					case .obj:
 						let aResponse = try uk.decode(nostr.Event.Signed.self)
 						authStage = .assertion(aResponse)
 					default:
-						throw QuickJSON.Decoder.Error.valueTypeMismatch(mismatchInfo)
+						throw QuickJSON.Decoding.Error.valueTypeMismatch(mismatchInfo)
 				}
 			}
 
@@ -87,19 +86,22 @@ extension Relay {
 
 					let writePromise = context.eventLoop.makePromise(of:Void.self)
 					context.channel.write(Relay.EncodingFrame(name:"AUTH", contents:[makeAssertion]), promise:writePromise)
-					writePromise.futureResult.whenComplete { [sh = self.stateHandler, okh = self.okHandler] result in
+					writePromise.futureResult.whenComplete { [sh = self.stateHandler] result in
 						switch result {
 							case .success(_):
 								#if DEBUG
 								Self.logger.info("sent nip-42 auth assertion.", metadata: ["response_uid":"\(makeAssertion.uid.description.prefix(8))"])
 								#endif
-								let promise = okh.createNIP20Promise(for:makeAssertion.uid)
-								sh(.authenticating(promise))
+								
+								sh(.authenticating(nil))
 								
 							case .failure(let error):
 								#if DEBUG
-								Self.logger.error("failed to send nip-42 auth assertion.", metadata: ["response_uid": "\(makeAssertion.uid.description.prefix(8))", "error": "\(error)"])
+								Self.logger.error("failed to send nip-42 auth assertion. this channel will now be closed", metadata: ["response_uid": "\(makeAssertion.uid.description.prefix(8))", "error": "\(error)"])
 								#endif
+
+								// nothing needs to be done here
+								_ = context.channel.close()
 						}
 					}
 				default:

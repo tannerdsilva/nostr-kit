@@ -3,7 +3,7 @@ import NIO
 /// a protocol expression that allows programming objects to implement a custom frame body parser and handler.
 public protocol NOSTR_frame_handler {
 	/// the body parser and handler
-	mutating func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:NIOCore.ChannelHandlerContext) throws
+	func NOSTR_frame_handler_decode_inbound(_ uk:inout UnkeyedDecodingContainer, context:NIOCore.ChannelHandlerContext) throws
 }
 
 /// a protocol expression that allows programming objects to express their type as representing a single frame instance
