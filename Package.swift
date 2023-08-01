@@ -5,8 +5,8 @@ import PackageDescription
 // conditional dependencies based on platform.
 var dependencies = [
 	Package.Dependency.package(url:"https://github.com/apple/swift-argument-parser.git", from:"1.2.2"),
-	Package.Dependency.package(url:"https://github.com/apple/swift-nio.git", from:"2.32.1"),
-	Package.Dependency.package(url:"https://github.com/apple/swift-nio-ssl.git", from:"2.5.0"),
+	Package.Dependency.package(url:"https://github.com/apple/swift-nio.git", from:"2.57.0"),
+	Package.Dependency.package(url:"https://github.com/apple/swift-nio-ssl.git", from:"2.24.0"),
 	Package.Dependency.package(url:"https://github.com/apple/swift-log.git", from:"1.0.0"),
 	Package.Dependency.package(url:"https://github.com/tannerdsilva/QuickJSON.git", from:"1.0.2"),
 	Package.Dependency.package(url:"https://github.com/tannerdsilva/rawdog.git", from:"0.0.7"),
