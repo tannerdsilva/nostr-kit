@@ -71,7 +71,7 @@ extension Relay {
 				self.pool = memory
 			} catch let error {
 				#if DEBUG
-				self.logger.error("failed to allocate memory pool.", metadata: ["error": "\(error)"])
+				self.logger.error("failed to allocate memory pool.", metadata:["error": "\(error)"])
 				#endif
 				context.close(promise:nil)
 			}
