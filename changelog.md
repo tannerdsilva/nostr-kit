@@ -1,10 +1,32 @@
+## v0.6.0
+
+- AES CBC 256 integrated natively into the project without dependencies.
+
+	- Unit tests included.
+
+- Eliminated external base64 library (dumb - this was a carryover from the websocket development that should have been eliminated sooner)
+
+	- Unit tests included.
+
+- Massive refactoring of the networking infrastructure.
+
+	- Largest changes pertain to the `Relay.Handler` and how its internal logic is handled.
+
+		- In many ways, this refactor is focused at the "heart" of the logic that drives `nostr-kit`, and aims to make it easier to build more complex logic within the relay handler.
+
+- New protocols defined for relay frames and the infrastructure required to parse them directly to their native types.
+
+- Upgraded QuickJSON package version to `from:"1.0.0"` allowing for `NOSTR_frame` to dynamically parse types without the use of `Foundation` or `JSONSerialization`.
+
+- Many other changes that are too numerous and insignificant to list here.
+
 ## v0.5.0
 
 - Cryptographic signing of the events are not handled natively by two primary event protocols.
 
 	- Created an open ended protocol for expressing an unsigned event with mutable content: `NOSTR_event_unsigned`.
 
-	- Created an open ended protocol for expressing a signed event with mutable content: `NOSTR_event_signed`.
+	- Created an open ended protocol for expressing a signed event with immutable content: `NOSTR_event_signed`.
 
 	- Unit tests and `nostr-cc` updated to account for this new method for signing events.
 

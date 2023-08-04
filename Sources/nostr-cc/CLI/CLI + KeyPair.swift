@@ -28,8 +28,7 @@ extension CLI {
 			mutating func run() async throws {
 				self.name.trimExtensionIfExists(".nkey")
 				let keypair = try nostr.KeyPair(seckey:SecretKey(nsec:nsec))
-				let encoder = QuickJSON.Encoder()
-				let encoded = try encoder.encode(keypair)
+				let encoded = try QuickJSON.encode(keypair)
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).nkey")
 				let fd = try FileDescriptor.open(baseURL.path, .writeOnly, options:[.create, .truncate], permissions:[.ownerReadWrite])
 				try fd.writeAll(encoded)
@@ -56,8 +55,7 @@ extension CLI {
 			mutating func run() async throws {
 				self.name.trimExtensionIfExists(".nkey")
 				let generateKey = try nostr.KeyPair.generateNew()
-				let encoder = QuickJSON.Encoder()
-				let encoded = try encoder.encode(generateKey)
+				let encoded = try QuickJSON.encode(generateKey)
 				let baseURL = URL(fileURLWithPath:FileManager.default.currentDirectoryPath).appendingPathComponent("\(name).nkey")
 				let fd = try FileDescriptor.open(baseURL.path, .writeOnly, options:[.create, .truncate], permissions:[.ownerReadWrite])
 				try fd.writeAll(encoded)

@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
 // used to generate json commitments
-import class QuickJSON.Encoder
+import QuickJSON
 // used to compute the sha256 hash of the commitment
 import struct Crypto.SHA256
 // used to generate the event signature
@@ -25,11 +25,25 @@ public protocol NOSTR_event_unsigned {
 	/// initialize a new instance of the unsigned event based on the unsigned content of this instance and the given author.
 	/// this function will mutate the given unsigned event if its date is nil. a nil date is a convenience feature for developers to specify that the content should be dated at sign time.
 	/// - default implementation provided.
-	mutating func sign<S>(to signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
+	mutating func sign<S>(type signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE
+}
+
+/// a protocol for expressing a signed and encrypted nostr event.
+/// - NOTE: programming objects that conform to this protocol are expected to represent ONLY content in the content property. if an initialization vector is stored in the content property of a particular implementation, it **MUST** be parsed and removed on initialization.
+public protocol NOSTR_event_signed_encrypted:NOSTR_event_signed {
+	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
+
+	/// the intended recipient of the encrypted event
+	var recipient:PublicKey { get }
+	/// the initialization vector used to encrypt the event
+	var iv:InitializationVector { get }
+
+	/// decrypt the content of the event using the given recipient keypair.
+	func decryptContent(as recipient:KeyPair) throws -> String
 }
 
 /// a protocol for expressing a complete nostr event.
-public protocol NOSTR_event_signed:Codable {
+public protocol NOSTR_event_signed:Codable, NOSTR_frame_encodable {
 	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
 	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
 
@@ -49,11 +63,14 @@ public protocol NOSTR_event_signed:Codable {
 	var content:String { get }
 
 	/// initialize a new instance of the signed event based on the given parameters.
-	/// - required implementation provided
+	/// - **required** implementation.
 	init(uid:Event.Signed.UID, sig:Event.Signed.Signature, tags:Event.Tags, author:PublicKey, date:NOSTR_event_date_TYPE, kind:NOSTR_event_kind_TYPE, content:String) throws
+
+	/// executes all of the work to verify if the instance's signature is valid.
+	func isSignatureValid() -> Bool
 }
 
-/// default codable implementation
+// default codable implementation
 extension NOSTR_event_signed {
 	public init(from decoder:Swift.Decoder) throws {
 		let container = try decoder.container(keyedBy: nostr.Event.CodingKeys.self)
@@ -62,7 +79,7 @@ extension NOSTR_event_signed {
 		var tagsArr = try container.nestedUnkeyedContainer(forKey:.tags)
 		var tags = Event.Tags()
 		while !tagsArr.isAtEnd {
-			tags.append(try tagsArr.decode(Event.Tag.self))
+			tags.append(try tagsArr.decode([String].self))
 		}
 		let author = try container.decode(PublicKey.self, forKey:.author)
 		let date = try container.decode(UInt64.self, forKey:.date)
@@ -72,12 +89,12 @@ extension NOSTR_event_signed {
 		self = try Self(uid:uid, sig:sig, tags:tags, author:author, date:NOSTR_event_date_TYPE(NOSTR_date_unixInterval:date), kind:kind, content:content)
 	}
 	public func encode(to encoder:Swift.Encoder) throws {
-		var container = try encoder.container(keyedBy: nostr.Event.CodingKeys.self)
+		var container = encoder.container(keyedBy: nostr.Event.CodingKeys.self)
 		try container.encode(self.uid, forKey:.uid)
 		try container.encode(self.sig, forKey:.sig)
 		var tagsArr = container.nestedUnkeyedContainer(forKey:.tags)
 		for tag in self.tags {
-			try tagsArr.encode(tag)
+			try tagsArr.encode(Array(tag))
 		}
 		try container.encode(self.author, forKey:.author)
 		try container.encode(self.date.NOSTR_date_unixInterval, forKey:.date)
@@ -87,11 +104,10 @@ extension NOSTR_event_signed {
 }
 
 extension NOSTR_event_unsigned {
-	public mutating func sign<S>(to signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
+	public mutating func sign<S>(type signedType:S.Type, as author:KeyPair) throws -> S where S:NOSTR_event_signed, S.NOSTR_event_date_TYPE == NOSTR_event_date_TYPE, S.NOSTR_event_kind_TYPE == NOSTR_event_kind_TYPE {
 		// generate the commitment bytes
-		let encoder = QuickJSON.Encoder()
 		let commit = Event.Commitment(unsigned:&self, author:author)
-		let commitmentBytes = try encoder.encode(commit)
+		let commitmentBytes = try QuickJSON.encode(commit)
 		
 		// generate the uid based on the commitment
 		var hasher = SHA256()
@@ -122,13 +138,13 @@ extension NOSTR_event_unsigned {
 	}
 }
 
+// default signature validation implementation
 extension NOSTR_event_signed {
-	public func isValid() -> Bool {
+	public func isSignatureValid() -> Bool {
 		do {
 			// generate the commitment bytes
 			let newComm = nostr.Event.Commitment(signed:self)
-			let encoder = QuickJSON.Encoder()
-			let commBytes = try encoder.encode(newComm)
+			let commBytes = try QuickJSON.encode(newComm)
 
 			// hash the commitment
 			let raw_id = SHA256.hash(Array(commBytes)).asRAW_val { shaHash in
@@ -157,5 +173,12 @@ extension NOSTR_event_signed {
 		} catch {
 			return false
 		}
+	}
+}
+
+// default frame encoding implementation
+extension NOSTR_event_signed {
+	public func NOSTR_frame_encode() -> Relay.EncodingFrame {
+		return Relay.EncodingFrame(name:"EVENT", contents:[self])
 	}
 }

@@ -6,7 +6,6 @@ import struct NIOHTTP1.HTTPHeaders
 import typealias NIOHTTP1.NIOHTTPClientUpgradeConfiguration
 
 import NIOPosix
-import ExtrasBase64
 
 import Logging
 
@@ -17,8 +16,7 @@ import struct NIOCore.NIOInsecureNoTLS
 
 /// the primary struct for the WebSocket connection
 internal struct WebSocket {
-	/// the URL type for WebSockets
-	public typealias URL = Relay.URL
+	/// the URL type for WebSocket
 	internal static let logger = makeDefaultLogger(label:"net-websocket", logLevel:.debug)
 }
 
@@ -58,7 +56,6 @@ extension WebSocket {
 		let upgradePromise = eventLoop.makePromise(of: Void.self)
 		upgradePromise.futureResult.cascadeFailure(to: wsPromise)
 
-
 		// light up the timeout task.
 		let timeoutTask = channel.eventLoop.scheduleTask(in: configuration.timeouts.websocketUpgradeTimeout) {
 			// the timeout task fired. fail the upgrade promise.
@@ -67,21 +64,34 @@ extension WebSocket {
 
 		// create a random key for the upgrade request
 		let requestKey = (0..<16).map { _ in UInt8.random(in: .min ..< .max) }
-		let base64Key = String(base64Encoding:requestKey, options:[])
+		let base64Key = String.base64Encoded(bytes:requestKey)
 
 		// build the initial request writer.
 		let initialRequestWriter = WebSocket.InitialRequestWriter(url:splitURL)
 
 		// build the websocket upgrader.
 		let websocketUpgrader = WebSocket.Upgrader(surl:splitURL, url:url, requestKey:base64Key, maxWebSocketFrameSize:configuration.limits.maxWebSocketFrameSize, upgradePromise:upgradePromise) { (channel, _) -> EventLoopFuture<Void> in
-			
 			// upgrade successful. build the nostr data channel.
 			// the return value of this function will be used as an indicator of how long the inbound data should be buffered for (the buffer will be released after the promise is fufilled)
 			var upgradePromise:EventLoopFuture<Void>
 			
+			var buildHandlers = [String:any NOSTR_frame_handler]()
+			let okHandler = Relay.OKHandler(url:url, channel:channel)
+			buildHandlers["OK"] = okHandler
+			let eoseHandler = Relay.EOSEHandler()
+			buildHandlers["EOSE"] = eoseHandler
+			let noticeHandler = Relay.NOTICEHandler()
+			buildHandlers["NOTICE"] = noticeHandler
+			let eventHandler = Relay.EVENTHandler(configuration:configuration, eoseHandler: eoseHandler)
+			buildHandlers["EVENT"] = eventHandler
+			if configuration.authenticationKey != nil {
+				let authHandler = Relay.AUTHHandler(keys:configuration.authenticationKey!, relay:url, okHandler:okHandler, stateHandler: { newState in return })
+				buildHandlers["AUTH"] = authHandler
+			}
+			
 			// start with the websocket handler.
 			let webSocketHandler = WebSocket.Handler(url:url, configuration:configuration)
-			let relayHandler = Relay.Handler(url:url, configuration:configuration)
+			let relayHandler = Relay.Handler(url:url, configuration:configuration, channel:channel, handlers:buildHandlers)
 			let catcher = Relay.Catcher()
 			let relay = Relay(url:url, channel:channel, handler:relayHandler, catcher:catcher)
 			upgradePromise = channel.pipeline.addHandlers([webSocketHandler, relayHandler, catcher])
@@ -92,12 +102,10 @@ extension WebSocket {
 			return upgradePromise
 		}
 
-
 		let config = NIOHTTPClientUpgradeConfiguration(upgraders:[websocketUpgrader], completionHandler: { context in
 			timeoutTask.cancel()
 			// the upgrade succeeded. remove the initial request writer.
 			channel.pipeline.removeHandler(initialRequestWriter, promise:nil)
-		
 		})
 
 		// add the upgrade and initial request write handlers.

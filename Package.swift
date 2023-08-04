@@ -5,18 +5,17 @@ import PackageDescription
 // conditional dependencies based on platform.
 var dependencies = [
 	Package.Dependency.package(url:"https://github.com/apple/swift-argument-parser.git", from:"1.2.2"),
-	Package.Dependency.package(url:"https://github.com/apple/swift-nio.git", from:"2.32.1"),
-	Package.Dependency.package(url:"https://github.com/apple/swift-nio-ssl.git", from:"2.5.0"),
-	Package.Dependency.package(url:"https://github.com/swift-extras/swift-extras-base64.git", from:"0.5.0"),
+	Package.Dependency.package(url:"https://github.com/apple/swift-nio.git", from:"2.57.0"),
+	Package.Dependency.package(url:"https://github.com/apple/swift-nio-ssl.git", from:"2.24.0"),
 	Package.Dependency.package(url:"https://github.com/apple/swift-log.git", from:"1.0.0"),
-	Package.Dependency.package(url:"https://github.com/tannerdsilva/QuickJSON.git", from:"0.1.1"),
+	Package.Dependency.package(url:"https://github.com/tannerdsilva/QuickJSON.git", from:"1.0.2"),
 	Package.Dependency.package(url:"https://github.com/tannerdsilva/rawdog.git", from:"0.0.7"),
-	Package.Dependency.package(url:"https://github.com/GigaBitcoin/secp256k1.swift", "0.7.0"..<"0.8.0"),
+	Package.Dependency.package(url:"https://github.com/jb55/secp256k1.swift", revision:"40b4b38b3b1c83f7088c76189a742870e0ca06a9"),
 	Package.Dependency.package(url:"https://github.com/apple/swift-crypto.git", from:"2.5.0"),
-	Package.Dependency.package(url:"https://github.com/apple/swift-system.git", from:"1.0.0")
+	Package.Dependency.package(url:"https://github.com/apple/swift-system.git", from:"1.0.0"),
+	Package.Dependency.package(url:"https://github.com/swift-server/async-http-client", from:"1.18.0")
 ]
 var nostrTargetDeps:[PackageDescription.Target.Dependency] = [
-	.product(name:"ExtrasBase64", package:"swift-extras-base64"),
 	.product(name:"NIOSSL", package:"swift-nio-ssl"),
 	.product(name:"NIO", package:"swift-nio"),
 	.product(name:"NIOWebSocket", package:"swift-nio"),
@@ -26,6 +25,7 @@ var nostrTargetDeps:[PackageDescription.Target.Dependency] = [
 	.product(name:"RAW", package:"rawdog"),
 	.product(name:"Crypto", package:"swift-crypto"),
 	.product(name:"SystemPackage", package:"swift-system"),
+	.product(name:"AsyncHTTPClient", package:"async-http-client"),
 	"cnostr"
 ]
 

@@ -3,13 +3,16 @@
 import NIO
 
 extension Relay {
+
+	/// catches the events in the channel and groups them together so that they can be passed downstream more efficiently
 	internal final class Catcher:ChannelInboundHandler {
+
 		#if DEBUG
 		internal let logger = makeDefaultLogger(label:"nostr-net:relay-catcher", logLevel:.info)
 		#endif
 
-	    internal typealias InboundIn = Message
-		internal typealias OutboundOut = Message
+	    internal typealias InboundIn = Message<nostr.Event.Signed>
+		internal typealias OutboundOut = Message<nostr.Event.Signed>
 
 		// the task that is used to flush the channel.
 		private var flushTask:Scheduled<Void>? = nil
@@ -38,12 +41,14 @@ extension Relay {
 			#endif
 		}
 
+
 		internal func handlerRemoved(context: ChannelHandlerContext) {
 			#if DEBUG
 			self.logger.trace("removed from pipeline.")
 			#endif
 		}
 
+		
 		internal func channelRead(context: ChannelHandlerContext, data: NIOAny) {
 			let message = self.unwrapInboundIn(data)
 

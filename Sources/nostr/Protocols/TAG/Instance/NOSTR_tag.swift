@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
 /// allows an instance of a specific Swift type to convey itself explicitly as a tag instance.
-public protocol NOSTR_tag:ExpressibleByArrayLiteral, Decodable, Encodable, Collection where Element == String, ArrayLiteralType == String {
+public protocol NOSTR_tag:ExpressibleByArrayLiteral, Collection where Element == String, ArrayLiteralType == String {
 	associatedtype Element = String // element must be string literal since any of the sub protocols that can be found in the body of this type.
 	associatedtype ArrayLiteralType = String
 	
@@ -43,29 +43,6 @@ extension Array:NOSTR_tag where Element == String {
 
 	public var NOSTR_tag_addlfields:[any NOSTR_tag_addlfield] {
 		return Array(self[2...])
-	}
-}
-
-// everyone gets a default implementation of the encodable protocol
-extension NOSTR_tag {
-	public func encode(to encoder:Encoder) throws {
-		var container = encoder.unkeyedContainer()
-		try container.encode(self.NOSTR_tag_namefield.NOSTR_tag_name)
-		try container.encode(self.NOSTR_tag_indexfield.NOSTR_tag_index)
-		for addlfield in self.NOSTR_tag_addlfields {
-			try container.encode(addlfield.NOSTR_tag_addlfield)
-		}
-	}
-	public init(from decoder: Decoder) throws {
-		var container = try decoder.unkeyedContainer()
-		let namefield = try container.decode(String.self)
-		let indexfield = try container.decode(String.self)
-		var addlfields = [any NOSTR_tag_addlfield]()
-		while !container.isAtEnd {
-			let addlfield = try container.decode(String.self)
-			addlfields.append(addlfield)
-		}
-		try self.init(NOSTR_tag_name:NOSTR_tag_name_TYPE(NOSTR_tag_name:namefield), NOSTR_tag_index:NOSTR_tag_index_TYPE(NOSTR_tag_index:indexfield), NOSTR_tag_addlfields:addlfields)
 	}
 }
 

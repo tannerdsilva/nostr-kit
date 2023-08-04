@@ -56,7 +56,7 @@ extension WebSocket {
 		///   - maxWebSocketFrameSize: largest incoming `WebSocketFrame` size in bytes.
 		///   - automaticErrorHandling: If true, adds `WebSocketProtocolErrorHandler` to the channel pipeline to catch and respond to WebSocket protocol errors. Default is true.
 		///   - upgradePipelineHandler: called once the upgrade was successful
-		internal init(surl:Relay.URL.Split, url:Relay.URL, requestKey:String, maxWebSocketFrameSize:Int, automaticErrorHandling: Bool = true, upgradePromise:EventLoopPromise<Void>, upgradeInitiator: @escaping (Channel, HTTPResponseHead) -> EventLoopFuture<Void>) {
+		internal init(surl:URL.Split, url:URL, requestKey:String, maxWebSocketFrameSize:Int, automaticErrorHandling: Bool = true, upgradePromise:EventLoopPromise<Void>, upgradeInitiator: @escaping (Channel, HTTPResponseHead) -> EventLoopFuture<Void>) {
 			self.surl = surl
 			self.requestKey = requestKey
 			self.maxWebSocketFrameSize = maxWebSocketFrameSize
@@ -124,7 +124,7 @@ extension WebSocket {
 			var hasher = SHA1()
 			hasher.update(string: self.requestKey)
 			hasher.update(string: magicWebSocketGUID)
-			let expectedAcceptValue = String(base64Encoding: hasher.finish())
+			let expectedAcceptValue = String.base64Encoded(bytes:hasher.finish())
 			
 			#if DEBUG
 			let upgradeResult = acceptValueHeader[0] == expectedAcceptValue

@@ -1,7 +1,7 @@
 // (c) tanner silva 2023. all rights reserved.
 
 /// Reader object for parsing String buffers
-extension Relay.URL {
+extension URL {
 	internal struct Parser: Sendable {
 		internal enum Error:Swift.Error {
 			case overflow
@@ -50,7 +50,7 @@ extension Relay.URL {
 }
 
 // MARK: sub-parsers
-extension Relay.URL.Parser {
+extension URL.Parser {
 	/// initialise a parser that parses a section of the buffer attached to another parser
 	private init(_ parser:Self, range: Range<Int>) {
 		self.buffer = parser.buffer
@@ -67,7 +67,7 @@ extension Relay.URL.Parser {
 	}
 }
 
-extension Relay.URL.Parser {
+extension URL.Parser {
 	/// return current character
 	/// - throws: .overflow
 	/// - returns: Current character
@@ -114,7 +114,7 @@ extension Relay.URL.Parser {
 	/// - Parameter count: Number of characters to read
 	/// - Throws: .overflow
 	/// - Returns: The string read from the buffer
-	internal mutating func read(count: Int) throws -> Relay.URL.Parser {
+	internal mutating func read(count: Int) throws -> URL.Parser {
 		var count = count
 		var readEndIndex = self.index
 		while count > 0 {
@@ -131,7 +131,7 @@ extension Relay.URL.Parser {
 	/// - Parameter until: Unicode.Scalar to read until
 	/// - Throws: .overflow if we hit the end of the buffer before reading character
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(until: Unicode.Scalar, throwOnOverflow: Bool = true) throws -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(until: Unicode.Scalar, throwOnOverflow: Bool = true) throws -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd() {
 			if unsafeCurrent() == until {
@@ -150,7 +150,7 @@ extension Relay.URL.Parser {
 	/// - Parameter characterSet: Unicode.Scalar set to check against
 	/// - Throws: .overflow
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(until characterSet: Set<Unicode.Scalar>, throwOnOverflow: Bool = true) throws -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(until characterSet: Set<Unicode.Scalar>, throwOnOverflow: Bool = true) throws -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd() {
 			if characterSet.contains(unsafeCurrent()) {
@@ -169,7 +169,7 @@ extension Relay.URL.Parser {
 	/// - Parameter until: Function to test
 	/// - Throws: .overflow
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(until: (Unicode.Scalar) -> Bool, throwOnOverflow: Bool = true) throws -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(until: (Unicode.Scalar) -> Bool, throwOnOverflow: Bool = true) throws -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd() {
 			if until(unsafeCurrent()) {
@@ -188,7 +188,7 @@ extension Relay.URL.Parser {
 	/// - Parameter characterSet: Unicode.Scalar set to check against
 	/// - Throws: .overflow
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(until keyPath: KeyPath<Unicode.Scalar, Bool>, throwOnOverflow: Bool = true) throws -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(until keyPath: KeyPath<Unicode.Scalar, Bool>, throwOnOverflow: Bool = true) throws -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd() {
 			if unsafeCurrent()[keyPath: keyPath] {
@@ -209,7 +209,7 @@ extension Relay.URL.Parser {
 	/// - Parameter skipToEnd: Should we set the position to after the found string
 	/// - Throws: .overflow, .emptyString
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(untilString: String, throwOnOverflow: Bool = true, skipToEnd: Bool = false) throws -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(untilString: String, throwOnOverflow: Bool = true, skipToEnd: Bool = false) throws -> URL.Parser {
 		var untilString = untilString
 		return try untilString.withUTF8 { utf8 in
 			guard utf8.count > 0 else { throw Error.emptyString }
@@ -245,7 +245,7 @@ extension Relay.URL.Parser {
 
 	/// Read from buffer from current position until the end of the buffer
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func readUntilTheEnd() -> Relay.URL.Parser {
+	@discardableResult internal mutating func readUntilTheEnd() -> URL.Parser {
 		let startIndex = self.index
 		self.index = self.range.endIndex
 		return self.subParser(startIndex..<self.index)
@@ -268,7 +268,7 @@ extension Relay.URL.Parser {
 	/// Read while character at current position is in supplied set
 	/// - Parameter while: character set to check
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(while characterSet: Set<Unicode.Scalar>) -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(while characterSet: Set<Unicode.Scalar>) -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd(),
 			characterSet.contains(unsafeCurrent())
@@ -281,7 +281,7 @@ extension Relay.URL.Parser {
 	/// Read while character returns true for supplied closure
 	/// - Parameter while: character set to check
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(while: (Unicode.Scalar) -> Bool) -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(while: (Unicode.Scalar) -> Bool) -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd(),
 			`while`(unsafeCurrent())
@@ -294,7 +294,7 @@ extension Relay.URL.Parser {
 	/// Read while character returns true for supplied KeyPath
 	/// - Parameter while: character set to check
 	/// - Returns: String read from buffer
-	@discardableResult internal mutating func read(while keyPath: KeyPath<Unicode.Scalar, Bool>) -> Relay.URL.Parser {
+	@discardableResult internal mutating func read(while keyPath: KeyPath<Unicode.Scalar, Bool>) -> URL.Parser {
 		let startIndex = self.index
 		while !self.reachedEnd(),
 			unsafeCurrent()[keyPath: keyPath]
@@ -307,8 +307,8 @@ extension Relay.URL.Parser {
 	/// Split parser into sections separated by character
 	/// - Parameter separator: Separator character
 	/// - Returns: arrays of sub parsers
-	internal mutating func split(separator: Unicode.Scalar) -> [Relay.URL.Parser] {
-		var subParsers: [Relay.URL.Parser] = []
+	internal mutating func split(separator: Unicode.Scalar) -> [URL.Parser] {
+		var subParsers: [URL.Parser] = []
 		while !self.reachedEnd() {
 			do {
 				let section = try read(until: separator)
@@ -331,7 +331,7 @@ extension Relay.URL.Parser {
 }
 
 /// Public versions of internal functions which include tests for overflow
-extension Relay.URL.Parser {
+extension URL.Parser {
 	/// Return the character at the current position
 	/// - Throws: .overflow
 	/// - Returns: Unicode.Scalar
@@ -402,7 +402,7 @@ extension Relay.URL.Parser {
 }
 
 /// extend Parser to conform to Sequence
-extension Relay.URL.Parser:Sequence {
+extension URL.Parser:Sequence {
 	internal typealias Element = Unicode.Scalar
 
 	internal func makeIterator() -> Iterator {
@@ -412,9 +412,9 @@ extension Relay.URL.Parser:Sequence {
 	internal struct Iterator: IteratorProtocol {
 		public typealias Element = Unicode.Scalar
 
-		var parser: Relay.URL.Parser
+		var parser: URL.Parser
 
-		init(_ parser: Relay.URL.Parser) {
+		init(_ parser: URL.Parser) {
 			self.parser = parser
 		}
 
@@ -426,7 +426,7 @@ extension Relay.URL.Parser:Sequence {
 }
 
 // internal versions without checks
-extension Relay.URL.Parser {
+extension URL.Parser {
 	internal func unsafeCurrent() -> Unicode.Scalar {
 		return decodeUTF8Character(at: self.index).0
 	}
@@ -451,7 +451,7 @@ extension Relay.URL.Parser {
 }
 
 // UTF8 parsing
-extension Relay.URL.Parser {
+extension URL.Parser {
 	internal func decodeUTF8Character(at index: Int) -> (Unicode.Scalar, Int) {
 		var index = index
 		let byte1 = UInt32(buffer[index])

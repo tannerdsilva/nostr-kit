@@ -4,7 +4,7 @@ import QuickJSON
 
 extension Relay {
 	/// the nostr message. this is the data structure that relays pass back and forth to their remote peers, and vice versa.
-	public enum Message {
+	public enum Message<E:NOSTR_event_signed> {
 
 		/// subscription message (with attached metadata).
 		case subscribe(SubscribeInfo)
@@ -24,10 +24,6 @@ extension Relay {
 		/// - argument 3: a human readable message
 		case ok(Event.Signed.UID, Bool, String)
 
-		/// an authentication challenge containing a challenge string.
-		/// - see nostr nip-42 for more information.
-		case authentication(AuthStage)
-
 		/// used to send human readable messages to the other side.
 		case notice(String)
 	}
@@ -44,21 +40,21 @@ extension Relay.Message {
 		/// an event context used for writing.
 		/// - used by clients to write events to a relay.
 		/// - used by relays to parse events from clients.
-		case write(nostr.Event.Signed)
+		case write(E)
 
 		/// a context used when an event corresponds to a subscription.
 		/// - used by clients to consume events from relays.
 		/// - used by relays to write requested events to clients.
-		case sub(String, nostr.Event.Signed)
+		case sub(String, E)
 
 		/// initialize an event context from a partially parsed context
 		internal init(from container:inout UnkeyedDecodingContainer) throws {
 			switch container.count {
 				case 2:
-					self = .write(try container.decode(nostr.Event.Signed.self))
+					self = .write(try container.decode(E.self))
 				case 3:
 					let subID = try container.decode(String.self)
-					let event = try container.decode(nostr.Event.Signed.self)
+					let event = try container.decode(E.self)
 					self = .sub(subID, event)
 				default:
 					throw ParseError()
@@ -77,7 +73,7 @@ extension Relay.Message {
 		}
 
 		/// returns the enclosed event regardless of context
-		public func getEvent() -> nostr.Event.Signed {
+		public func getEvent() -> E {
 			switch self {
 				case .write(let event):
 					return event
@@ -85,18 +81,6 @@ extension Relay.Message {
 					return event
 			}
 		}
-	}
-}
-
-extension Relay.Message {
-	public enum AuthStage {
-		/// represents the challenge stage of the authentication scheme
-		/// - argument 1: the challenge string
-		case challenge(String)
-
-		/// the assertion stage of the authentication scheme.
-		/// - argument 1: the signed authentication proof event
-		case assertion(nostr.Event.Signed)
 	}
 }
 
@@ -137,19 +121,6 @@ extension Relay.Message:Codable {
 			case "EOSE":
 				let subID = try container.decode(String.self)
 				self = .endOfStoredEvents(subID)
-			case "AUTH":
-				do {
-					let challenge = try container.decode(String.self)
-					self = .authentication(.challenge(challenge))
-				} catch QuickJSON.Decoder.Error.valueTypeMismatch(let mismatchInfo) {
-					switch mismatchInfo.found {
-						case .obj:
-							let aResponse = try container.decode(nostr.Event.Signed.self)
-							self = .authentication(.assertion(aResponse))
-						default:
-							throw QuickJSON.Decoder.Error.valueTypeMismatch(mismatchInfo)
-					}
-				}
 			case "OK":
 				let proof = try container.decode(Event.Signed.UID.self)
 				let didSucceed = try container.decode(Bool.self)
@@ -180,14 +151,6 @@ extension Relay.Message:Codable {
 			case .endOfStoredEvents(let subID):
 				try container.encode("EOSE")
 				try container.encode(subID)
-			case .authentication(let aStage):
-				try container.encode("AUTH")
-				switch aStage {
-					case .challenge(let chal):
-						try container.encode(chal)
-					case .assertion(let proof):
-						try container.encode(proof)
-				}
 			case .notice(let chal):
 				try container.encode("NOTICE")
 				try container.encode(chal)

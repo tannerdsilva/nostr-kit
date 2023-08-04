@@ -12,6 +12,13 @@ internal func makeDefaultLogger(label:String, logLevel:Logger.Level) -> Logger {
 	return newLogger
 }
 
+internal func makeDefaultLogger(label:String, url:URL, logLevel:Logger.Level) -> Logger {
+	var newLogger = Logger(label:label)
+	newLogger.logLevel = logLevel
+	newLogger[metadataKey:"url"] = "\(url.string)"
+	return newLogger
+}
+
 #if DEBUG
 internal let logger = makeDefaultLogger(label:"nostr", logLevel:.info)
 #endif

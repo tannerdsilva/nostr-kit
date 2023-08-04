@@ -19,21 +19,15 @@ extension KeyPair {
 			print(Colors.red("Secret key:"), terminator:"")
 			switch hex {
 				case true:
-					print(" \(secretKey.hexEncodedString)")
+					print(" \(secretKey.hexEncodedString())")
 				case false:
 					print(" \(secretKey.nsecString())")
 			}
 		}
 	}
 
-	public static func fromJSONEncodedPath(_ keyEncodingPath:URL, decoder:QuickJSON.Decoder? = nil) throws -> nostr.KeyPair {
-		let decObj:QuickJSON.Decoder
-		if decoder == nil { 
-			decObj = QuickJSON.Decoder()
-		} else {
-			decObj = decoder!
-		}
+	public static func fromJSONEncodedPath(_ keyEncodingPath:URL) throws -> nostr.KeyPair {
 		let getData = try Data(contentsOf:keyEncodingPath).bytes
-		return try decObj.decode(nostr.KeyPair.self, from:getData)
+		return try QuickJSON.decode(nostr.KeyPair.self, from:getData, size:getData.count)
 	}
 }
