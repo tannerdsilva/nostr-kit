@@ -1,4 +1,4 @@
-## v0.5.1
+## v0.6.0
 
 - AES CBC 256 integrated natively into the project without dependencies.
 
@@ -7,6 +7,18 @@
 - Eliminated external base64 library (dumb - this was a carryover from the websocket development that should have been eliminated sooner)
 
 	- Unit tests included.
+
+- Massive refactoring of the networking infrastructure.
+
+	- Largest changes pertain to the `Relay.Handler` and how its internal logic is handled.
+
+		- In many ways, this refactor is focused at the "heart" of the logic that drives `nostr-kit`, and aims to make it easier to build more complex logic within the relay handler.
+
+- New protocols defined for relay frames and the infrastructure required to parse them directly to their native types.
+
+- Upgraded QuickJSON package version to `from:"1.0.0"` allowing for `NOSTR_frame` to dynamically parse types without the use of `Foundation` or `JSONSerialization`.
+
+- Many other changes that are too numerous and insignificant to list here.
 
 ## v0.5.0
 
