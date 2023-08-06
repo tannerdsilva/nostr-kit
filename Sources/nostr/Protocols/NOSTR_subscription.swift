@@ -23,7 +23,7 @@ public protocol NOSTR_subscription:NOSTR_frame_encodable {
 	var NOSTR_subscription_sid:String { get }
 
 	/// the filters associated with this subscription
-	var NOSTR_subscription_filters:[any NOSTR_filter<NOSTR_subscription_event_TYPE>] { get }
+	var NOSTR_subscription_filters:[any NOSTR_subscription_filter<NOSTR_subscription_event_TYPE>] { get }
 
 	/// the consumer for this subscription
 	var NOSTR_subscription_consumer:NOSTR_subscription_consumer_TYPE { get }

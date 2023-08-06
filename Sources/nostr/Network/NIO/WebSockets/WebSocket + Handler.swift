@@ -87,8 +87,16 @@ extension WebSocket {
 					// we never received a pong from our last ping, so the connection has timed out\
 					context.fireErrorCaught(Relay.Error.WebSocket.connectionTimeout)
 				} else {
-					self.sendPing(context: context).whenSuccess {
-						self.initiateAutoPing(context:context, interval: interval)
+					self.sendPing(context: context).whenComplete {
+						switch $0 {
+							case .success():
+								self.initiateAutoPing(context:context, interval: interval)
+							case let .failure(err):
+								#if DEBUG
+								self.logger.error("failed to send ping: '\(err)'")
+								#endif
+								context.close()
+						}
 					}
 				}
 			}

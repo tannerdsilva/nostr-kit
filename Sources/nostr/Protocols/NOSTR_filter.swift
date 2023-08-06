@@ -1,6 +1,6 @@
 // (c) tanner silva 2023. all rights reserved.
 
-public protocol NOSTR_filter<NOSTR_filter_event_TYPE>:Codable {
+public protocol NOSTR_subscription_filter<NOSTR_filter_event_TYPE>:Codable {
 	/// the underlying type that this filter is representing.
 	/// - this is used to natively encode and decode the events associated with this filter.
 	associatedtype NOSTR_filter_event_TYPE:NOSTR_event_signed = nostr.Event.Signed
@@ -30,7 +30,7 @@ public protocol NOSTR_filter<NOSTR_filter_event_TYPE>:Codable {
 	func isEmpty() -> Bool
 }
 
-extension NOSTR_filter {
+extension NOSTR_subscription_filter {
 	public func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE {
 		if self.uids != nil {
 			if self.uids!.contains(event.uid) {
@@ -88,7 +88,7 @@ extension NOSTR_filter {
 }
 
 // default implementation of codable
-extension NOSTR_filter {
+extension NOSTR_subscription_filter {
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		if self.uids != nil {
@@ -143,6 +143,7 @@ extension NOSTR_filter {
 
 // coding keys for the filter struct
 fileprivate enum CodingKeys:CodingKey {
+
 	case ids
 	case kinds
 	case since
@@ -150,15 +151,6 @@ fileprivate enum CodingKeys:CodingKey {
 	case authors
 	case limit
 	case genericTagDescription(Character)
-
-	var isGenericTag:Bool {
-		switch self {
-			case .genericTagDescription(_):
-				return true
-			default:
-				return false
-		}
-	}
 
 	var stringValue:String {
 		switch self {
@@ -178,7 +170,7 @@ fileprivate enum CodingKeys:CodingKey {
 				return "#\(char)"
 		}
 	}
-	init(stringValue:String) {
+	init?(stringValue:String) {
 		if stringValue.first == "#" && stringValue.count == 2 {
 			self = .genericTagDescription(stringValue.last!)
 		} else {
@@ -196,7 +188,7 @@ fileprivate enum CodingKeys:CodingKey {
 			case "limit":
 				self = .limit
 			default:
-				fatalError("someone wrote a bug in this logic.")
+				return nil
 			}
 		}
 		
