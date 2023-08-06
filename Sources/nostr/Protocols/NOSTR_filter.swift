@@ -3,7 +3,7 @@
 public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
 	/// the underlying type that this filter is representing.
 	/// - this is used to natively encode and decode the events associated with this filter.
-	associatedtype NOSTR_filter_event_TYPE:NOSTR_event_signed
+	associatedtype NOSTR_filter_event_TYPE:NOSTR_event_signed = nostr.Event.Signed
 
 	/// event uids to filter by
 	var uids:Set<Event.Signed.UID>? { get }
@@ -18,6 +18,7 @@ public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
 	/// returned events must be authored by one of these public keys
 	var authors:Set<nostr.PublicKey>? { get }
 
+	/// the generic tags (and their corresponding values) that this filter could match with
 	var genericTags:[Character:[any NOSTR_tag_index]]? { get }
 
 	/// determines if the given event matches the filter (requires that the event and filter events are of the same kind type)
@@ -28,18 +29,18 @@ public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
 
 extension NOSTR_filter {
 	public func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE {
-		if let uids = self.uids {
-			if uids.contains(event.uid) {
+		if self.uids != nil {
+			if self.uids!.contains(event.uid) {
 				return true
 			}
 		}
-		if let kinds = self.kinds {
-			if kinds.contains(event.kind) {
+		if self.kinds != nil {
+			if self.kinds!.contains(event.kind) {
 				return true
 			}
 		}
-		if let since = self.since {
-			if event.date.NOSTR_date_unixInterval > since.NOSTR_date_unixInterval {
+		if self.since != nil {
+			if event.date.NOSTR_date_unixInterval > self.since!.NOSTR_date_unixInterval {
 				return true
 			}
 		}
@@ -53,10 +54,32 @@ extension NOSTR_filter {
 				return true
 			}
 		}
+		if genericTags != nil {
+			// convert the tags into a dictionary of names and their corresponding index values
+			let checkEventTags = event.tags.asNamedDictionary()
+			// for each generic row that is in this event
+			for (tagName, tagMatches) in genericTags! {
+				// check if the event has a tag with the same name
+				let checkForValues = checkEventTags[tagName.NOSTR_tag_name]
+				if checkForValues != nil {
+					// it does have a tag with the same name, so check if any of the values match
+					for tagMatch in tagMatches {
+						if checkForValues!.contains(tagMatch.NOSTR_tag_index) {
+							return true
+						}
+					}
+				}
+			}
+		}
 		return false
 	}
 
+	/// a convenience function to check if the filter is populated with any criteria.
 	public func isEmpty() -> Bool {
-		return (self.uids == nil || self.uids!.count == 0) && (self.kinds == nil || self.kinds!.count == 0) && self.since == nil && self.until == nil && (self.authors == nil || self.authors!.count == 0)
+		return (self.uids == nil || self.uids!.count == 0) &&
+				(self.kinds == nil || self.kinds!.count == 0) &&
+				self.since == nil && self.until == nil &&
+				(self.authors == nil || self.authors!.count == 0) &&
+				self.genericTags == nil
 	}
 }

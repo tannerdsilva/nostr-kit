@@ -9,12 +9,12 @@ public struct Event {
 
 	/// represents an event whose contents are mutable prior to signing
 	public struct Unsigned:NOSTR_event_unsigned {
-		public var kind = Kind.text_note
+		public var kind = Kind.text_note.rawValue
 		public var tags:Tags = []
 		public var date:Date? = nil
 		public var content = ""
 
-		public init(kind:Kind = .text_note, tags:Tags = [], date:Date? = nil, content:String = "") {
+		public init(kind:UInt64, tags:Tags = [], date:Date? = nil, content:String = "") {
 			self.kind = kind
 			self.tags = tags
 			self.date = date
@@ -49,11 +49,11 @@ public struct Event {
 		/// the creation date of the event
 		public let date:Date
 		/// the kind of event
-		public let kind:Kind
+		public let kind:UInt64
 		/// the content of the event
 		public let content:String
 
-		public init(uid:UID, sig:Signature, tags:Tags, author:PublicKey, date:Date, kind:Kind, content:String) throws {
+		public init(uid:UID, sig:Signature, tags:Tags, author:PublicKey, date:Date, kind:UInt64, content:String) throws {
 			self.uid = uid
 			self.sig = sig
 			self.tags = tags

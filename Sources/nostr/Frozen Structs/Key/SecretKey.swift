@@ -120,7 +120,7 @@ extension SecretKey {
 	}
 }
 
-extension SecretKey:NOSTR_bech32_raw {
+ extension SecretKey:NOSTR_bech32_raw {
 	public static var NOSTR_bech32_hrp: String {
 		return "nsec"
 	}
@@ -128,9 +128,9 @@ extension SecretKey:NOSTR_bech32_raw {
 
 extension SecretKey {
 	public init(nsec:String) throws {
-		self = try Self(NOSTR_bech32:nsec)
+		self = try Self(NOSTR_bech32_encoded:nsec)
 	}
 	public func nsecString() -> String {
-		return self.NOSTR_bech32()
+		return self.NOSTR_bech32_encode()
 	}
 }

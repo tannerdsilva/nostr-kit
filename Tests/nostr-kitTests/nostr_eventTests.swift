@@ -5,7 +5,7 @@ class EventTests: XCTestCase {
 	internal static let keyPair = try! KeyPair(seckey:SecretKey(nsec:"nsec1s23j6z0x4w2y35c5zkf6le539sdmkmw4r7mm9jj22gnltrllqxzqjnh2wm"))
 
 	func testGenerateUID() throws {
-		var usEvent = Event.Unsigned(kind:.text_note)
+		var usEvent = Event.Unsigned(kind:nostr.Event.Kind.text_note.rawValue)
 		usEvent.date = Date(unixInterval: 1700)
 		usEvent.content = "Test content"
 		let event = try usEvent.sign(type:Event.Signed.self, as:EventTests.keyPair)
@@ -15,7 +15,7 @@ class EventTests: XCTestCase {
 	
 	func testEventSignatureValidation() throws {
 
-		var unsignedEvent = Event.Unsigned(kind:.text_note)
+		var unsignedEvent = Event.Unsigned(kind:nostr.Event.Kind.text_note.rawValue)
 		unsignedEvent.content = "test content"
 
 		// Sign the event

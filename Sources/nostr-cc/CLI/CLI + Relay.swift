@@ -64,7 +64,7 @@ extension CLI {
 				let buildConf = nostr.Relay.Client.Configuration(authenticationKey:readKey)
 				let relayConn = try await nostr.Relay.connect(url:nostr.URL(url), configuration: buildConf, on:mainEventLoop.next()).get()
 				
-				var unsignedEvent = nostr.Event.Unsigned(kind:nostr.Event.Kind.text_note)
+				var unsignedEvent = nostr.Event.Unsigned(kind:nostr.Event.Kind.text_note.rawValue)
 				unsignedEvent.content = myMessage
 				let newEvent = try unsignedEvent.sign(type:nostr.Event.Signed.self, as:readKey)
 				CLI.logger.info("posting event: \(newEvent.uid.description.prefix(8))")

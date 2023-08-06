@@ -155,9 +155,9 @@ extension PublicKey {
 
 extension PublicKey {
 	public init(npubString:String) throws {
-		self = try Self(NOSTR_bech32:npubString)
+		self = try Self(NOSTR_bech32_encoded:npubString)
 	}
 	public func npubString() -> String {
-		return self.NOSTR_bech32()
+		return self.NOSTR_bech32_encode()
 	}
 }

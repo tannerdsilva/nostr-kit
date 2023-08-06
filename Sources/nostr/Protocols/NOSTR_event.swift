@@ -45,7 +45,7 @@ public protocol NOSTR_event_signed_encrypted:NOSTR_event_signed {
 /// a protocol for expressing a complete nostr event.
 public protocol NOSTR_event_signed:Codable, NOSTR_frame_encodable {
 	associatedtype NOSTR_event_date_TYPE:NOSTR_date = nostr.Date
-	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = nostr.Event.Kind
+	associatedtype NOSTR_event_kind_TYPE:NOSTR_kind = UInt64
 
 	/// the unique identifier for the event
 	var uid:Event.Signed.UID { get }

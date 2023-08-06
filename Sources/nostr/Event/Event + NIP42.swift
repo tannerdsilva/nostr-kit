@@ -2,7 +2,7 @@
 
 extension Event {
 	internal static func nip42Assertion(to challenge:String, from relay:URL, using keypair:KeyPair) throws -> nostr.Event.Signed {
-		var authEvent = nostr.Event.Unsigned(kind:.auth_response)
+		var authEvent = nostr.Event.Unsigned(kind:Kind.auth_response.rawValue)
 		authEvent.tags = [
 			["challenge", challenge],
 			["relay", relay.description],

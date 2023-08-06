@@ -6,7 +6,7 @@ import RAW
 extension Event {
 
 	/// represents the various Kinds of events that may be handled
-	public enum Kind:UInt64, Equatable, Comparable, Codable, Hashable, NOSTR_kind {
+	public enum Kind:UInt64, Equatable, Comparable, Codable, Hashable {
 		case metadata = 0
 		case text_note = 1
 		case recommended_relay = 2
