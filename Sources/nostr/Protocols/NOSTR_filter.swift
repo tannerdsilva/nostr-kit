@@ -1,6 +1,6 @@
 // (c) tanner silva 2023. all rights reserved.
 
-public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
+public protocol NOSTR_filter<NOSTR_filter_event_TYPE>:Codable {
 	/// the underlying type that this filter is representing.
 	/// - this is used to natively encode and decode the events associated with this filter.
 	associatedtype NOSTR_filter_event_TYPE:NOSTR_event_signed = nostr.Event.Signed
@@ -20,6 +20,9 @@ public protocol NOSTR_filter<NOSTR_filter_event_TYPE> {
 
 	/// the generic tags (and their corresponding values) that this filter could match with
 	var genericTags:[Character:[any NOSTR_tag_index]]? { get }
+
+	/// main initializer for the filter.
+	init(uids:Set<Event.Signed.UID>?, kinds:Set<NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE>?, since:NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE?, until:NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE?, limit:UInt32?, authors:Set<nostr.PublicKey>?, genericTags:[Character:[any NOSTR_tag_index]]?)
 
 	/// determines if the given event matches the filter (requires that the event and filter events are of the same kind type)
 	func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE
@@ -81,5 +84,127 @@ extension NOSTR_filter {
 				self.since == nil && self.until == nil &&
 				(self.authors == nil || self.authors!.count == 0) &&
 				self.genericTags == nil
+	}
+}
+
+// default implementation of codable
+extension NOSTR_filter {
+	public func encode(to encoder:Encoder) throws {
+		var container = encoder.container(keyedBy: CodingKeys.self)
+		if self.uids != nil {
+			try container.encode(uids!, forKey:.ids)
+		}
+		if self.kinds != nil {
+			try container.encode(kinds!, forKey:.kinds)
+		}
+		if self.since != nil {
+			try container.encode(since!.NOSTR_date_unixInterval, forKey:.since)
+		}
+		if until != nil {
+			try container.encode(until!.NOSTR_date_unixInterval, forKey:.until)
+		}
+		if limit != nil {
+			try container.encode(limit!, forKey:.limit)
+		}
+		if authors != nil {
+			try container.encode(authors!, forKey:.authors)
+		}
+		if genericTags != nil {
+			try genericTags!.forEach({ (char, tags) in
+				try container.encode(tags.map({ $0.NOSTR_tag_index }), forKey:.genericTagDescription(char))
+			})
+		}
+	}
+
+	public init(from decoder:Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		let allKeys = container.allKeys
+		let uids = try container.decodeIfPresent(Set<Event.Signed.UID>.self, forKey:.ids)
+		let kinds = try container.decodeIfPresent(Set<NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE>.self, forKey:.kinds)
+		let since = try container.decodeIfPresent(UInt64.self, forKey:.since)
+		let sinceDate = since != nil ? NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE(NOSTR_date_unixInterval:since!) : nil
+		let until = try container.decodeIfPresent(UInt64.self, forKey:.until)
+		let untilDate = until != nil ? NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE(NOSTR_date_unixInterval:until!) : nil
+		let limit = try container.decodeIfPresent(UInt32.self, forKey:.limit)
+		let authors = try container.decodeIfPresent(Set<nostr.PublicKey>.self, forKey:.authors)
+		var buildTags = [Character:[any NOSTR_tag_index]]()
+		for curTag in allKeys {
+			switch curTag {
+				case .genericTagDescription(let char):
+					let tagValues = try container.decode([String].self, forKey:curTag)
+					buildTags[char] = tagValues
+				default:
+					continue
+			}
+		}
+		self.init(uids:uids, kinds:kinds, since:sinceDate, until:untilDate, limit:limit, authors:authors, genericTags:buildTags)
+	}
+}
+
+// coding keys for the filter struct
+fileprivate enum CodingKeys:CodingKey {
+	case ids
+	case kinds
+	case since
+	case until
+	case authors
+	case limit
+	case genericTagDescription(Character)
+
+	var isGenericTag:Bool {
+		switch self {
+			case .genericTagDescription(_):
+				return true
+			default:
+				return false
+		}
+	}
+
+	var stringValue:String {
+		switch self {
+			case .ids:
+				return "ids"
+			case .kinds:
+				return "kinds"
+			case .since:
+				return "since"
+			case .until:
+				return "until"
+			case .authors:	
+				return "authors"
+			case .limit:	
+				return "limit"
+			case let .genericTagDescription(char):
+				return "#\(char)"
+		}
+	}
+	init(stringValue:String) {
+		if stringValue.first == "#" && stringValue.count == 2 {
+			self = .genericTagDescription(stringValue.last!)
+		} else {
+			switch stringValue {
+			case "ids":
+				self = .ids
+			case "kinds":
+				self = .kinds
+			case "since":
+				self = .since
+			case "until":
+				self = .until
+			case "authors":
+				self = .authors
+			case "limit":
+				self = .limit
+			default:
+				fatalError("someone wrote a bug in this logic.")
+			}
+		}
+		
+	}
+	var intValue: Int? {
+		return nil
+	}
+	init?(intValue: Int) {
+		return nil
 	}
 }

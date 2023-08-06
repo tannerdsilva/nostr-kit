@@ -93,7 +93,7 @@ extension WebSocket {
 			let webSocketHandler = WebSocket.Handler(url:url, configuration:configuration)
 			let relayHandler = Relay.Handler(url:url, configuration:configuration, channel:channel, handlers:buildHandlers)
 			let catcher = Relay.Catcher()
-			let relay = Relay(url:url, channel:channel, handler:relayHandler, catcher:catcher)
+			let relay = Relay(url:url, channel:channel, handler:relayHandler, catcher:catcher, eventHandler:eventHandler, okHandler:okHandler)
 			upgradePromise = channel.pipeline.addHandlers([webSocketHandler, relayHandler, catcher])
 			upgradePromise.whenSuccess({
 				wsPromise.succeed(relay)

@@ -21,17 +21,23 @@ public struct Relay {
 	/// the relay handler. this is the primary interface for general purpose 
 	internal let handler:Relay.Handler
 	internal let okHandler:OKHandler
+	internal let eventHandler:EVENTHandler
 	internal let catcher:Relay.Catcher
 
 	/// the internal initializer for a relay.
-	internal init(url:URL, channel:Channel, handler:Relay.Handler, catcher:Relay.Catcher) {
+	internal init(url:URL, channel:Channel, handler:Relay.Handler, catcher:Relay.Catcher, eventHandler:EVENTHandler, okHandler:OKHandler) {
 		self.url = url
 		self.channel = channel
 		self.handler = handler
+		self.eventHandler = eventHandler
 		self.okHandler = handler.okHandler
 		self.catcher = catcher
 	}
 
+	/// writes a pre-signed event to the remote peer.
+	/// - parameters:
+	/// 	- event: the signed event to post
+	/// - returns: an EventLoopFuture that will eventually return the date that the event was confirmed to be posted, or a failure if unsuccessful.
 	public func write<E>(event:E) -> EventLoopFuture<Date> where E:NOSTR_event_signed {
 		// the promise that ties to the NIP-20 response for the published event
 		let returnPromise = self.handler.okHandler.createNIP20Promise(for:event.uid)
@@ -48,8 +54,6 @@ public struct Relay {
 					#if DEBUG
 					Self.logger.error("failed to write event to relay.", metadata:["error": "\(err)", "event_uid": "\(event.uid.description.prefix(8))"])
 					#endif
-
-
 			}
 		}
 		writePromise.futureResult.cascadeFailure(to:returnPromise)
@@ -60,6 +64,15 @@ public struct Relay {
 		return returnPromise.futureResult
 	}
 
+	public func subscribe<S>(_ subscription:S) -> EventLoopFuture<Void> where S:NOSTR_subscription {
+		return channel.eventLoop.submit({
+			// register the subscription in the event handler before the subscription is sent to the relay
+			self.eventHandler.registerSubscription(subscription)
+		}).flatMap {
+			// send the subscription to the relay
+			self.channel.write(subscription.NOSTR_frame_encode())
+		}
+	}
 }
 
 extension Relay {

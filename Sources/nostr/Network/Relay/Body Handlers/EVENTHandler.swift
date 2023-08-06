@@ -84,6 +84,9 @@ extension Relay {
 
 			// verify that this SID is accounted for
 			guard activeSubscriptions.contains(decodeSID) else {
+				#if DEBUG
+				logger.notice("got anonymous event match for subscription ID '\(decodeSID)'.")
+				#endif
 				throw SubscriptionIDNotFound(sid: decodeSID)
 			}
 			

@@ -38,6 +38,16 @@ public struct Filter {
 
 // implimentation of the NOSTR_filter protocol within the Filter struct
 extension Filter:NOSTR_filter {
+    public init(uids: Set<Event.Signed.UID>?, kinds: Set<UInt64>?, since: Date?, until: Date?, limit: UInt32?, authors: Set<PublicKey>?, genericTags: [Character : [any NOSTR_tag_index]]?) {
+        self.uids = uids
+		self.kinds = kinds
+		self.since = since
+		self.until = until
+		self.limit = limit
+		self.authors = authors
+		self.tags = genericTags
+    }
+
 	public var genericTags: [Character:[any NOSTR_tag_index]]? {
 		return self.tags
 	}
@@ -64,68 +74,6 @@ extension Filter:NOSTR_filter {
 	}
 }
 
-extension Filter:Codable {
-	/// initialize using a standard swift decoder
-	public init(from decoder:Swift.Decoder) throws {
-		let container = try decoder.container(keyedBy: CodingKeys.self)
-		do {
-			self.uids = try container.decode(Set<Event.Signed.UID>.self, forKey: .ids)
-		} catch {
-			self.uids = nil
-		}
-		do {
-			self.kinds = try container.decode(Set<UInt64>.self, forKey: .kinds)
-		} catch {
-			self.kinds = nil
-		}
-		do {
-			let getSince = try container.decode(UInt64.self, forKey: .since)
-			self.since = Date(NOSTR_date_unixInterval:getSince)
-		} catch {
-			self.since = nil
-		}
-		do {
-			let getUntil = try container.decode(UInt64.self, forKey: .until)
-			self.until = Date(NOSTR_date_unixInterval:getUntil)
-		} catch {
-			self.until = nil
-		}
-		do {
-			self.authors = try container.decode(Set<nostr.PublicKey>.self, forKey: .authors)
-		} catch {
-			self.authors = nil
-		}
-		do {
-			self.limit = try container.decode(UInt32.self, forKey: .limit)
-		} catch {
-			self.limit = nil
-		}
-	}
-
-	/// export to a standard swift encoder
-	public func encode(to encoder:Swift.Encoder) throws {
-		var container = encoder.container(keyedBy: CodingKeys.self)
-		if self.uids != nil {
-			try container.encode(uids, forKey: .ids)
-		}
-		if self.kinds != nil {
-			try container.encode(kinds, forKey: .kinds)
-		}
-		if self.since != nil {
-			try container.encode(since!.NOSTR_date_unixInterval, forKey: .since)
-		}
-		if self.until != nil {
-			try container.encode(until!.NOSTR_date_unixInterval, forKey: .until)
-		}
-		if self.authors != nil {
-			try container.encode(authors, forKey: .authors)
-		}
-		if self.limit != nil {
-			try container.encode(limit, forKey: .limit)
-		}
-	}
-}
-
 extension nostr.Filter:Hashable, Equatable {
 	public static func == (lhs:Filter, rhs:Filter) -> Bool {
 		return lhs.uids == rhs.uids
@@ -143,14 +91,4 @@ extension nostr.Filter:Hashable, Equatable {
 		hasher.combine(authors)
 		hasher.combine(limit)
 	}
-}
-
-// coding keys for the filter struct
-fileprivate enum CodingKeys:String, CodingKey {
-	case ids = "ids"
-	case kinds = "kinds"
-	case since = "since"
-	case until = "until"
-	case authors = "authors"
-	case limit = "limit"
 }
