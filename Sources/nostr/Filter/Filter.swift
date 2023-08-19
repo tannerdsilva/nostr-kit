@@ -2,8 +2,7 @@
 
 /// standard nostr relay filter.
 /// - compliant with `NOSTR_filter` protocol
-public struct Filter {
-
+public struct Filter:NOSTR_filter {
 	/// event uids to filter by
 	public var uids:Set<Event.Signed.UID>?
 	/// event kinds to filter by
@@ -17,7 +16,7 @@ public struct Filter {
 	/// returned events must be authored by one of these public keys
 	public var authors:Set<nostr.PublicKey>?
 	/// the tags associated with this filter
-	public var tags:[Character:[any NOSTR_tag_index]]?
+	public var genericTags:[Character:[any NOSTR_tag_index]]?
 
 	/// create a new filter
 	public init(
@@ -25,7 +24,8 @@ public struct Filter {
 		kinds:Set<UInt64>? = nil,
 		since:Date? = nil, until:Date? = nil,
 		limit:UInt32? = nil,
-		authors:Set<nostr.PublicKey>? = nil
+		authors:Set<nostr.PublicKey>? = nil,
+		genericTags:[Character:[any NOSTR_tag_index]]? = nil
 	) {
 		self.uids = uids
 		self.kinds = kinds
@@ -36,42 +36,53 @@ public struct Filter {
 	}
 }
 
-// implimentation of the NOSTR_filter protocol within the Filter struct
-extension Filter:NOSTR_filter {
-    public init(uids: Set<Event.Signed.UID>?, kinds: Set<UInt64>?, since: Date?, until: Date?, limit: UInt32?, authors: Set<PublicKey>?, genericTags: [Character : [any NOSTR_tag_index]]?) {
-        self.uids = uids
-		self.kinds = kinds
-		self.since = since
-		self.until = until
-		self.limit = limit
-		self.authors = authors
-		self.tags = genericTags
+extension nostr.Filter {
+	public struct Handled<NOSTR_filter_TYPE:NOSTR_filter>:NOSTR_filter_handled {
+		private let baseFilter:NOSTR_filter_TYPE
+		private let handlerFunction:(NOSTR_filter_TYPE.NOSTR_filter_event_TYPE) -> Void
+		public init(_ filter:NOSTR_filter_TYPE, _ handler:@escaping(NOSTR_filter_TYPE.NOSTR_filter_event_TYPE) -> Void) {
+			let (stored, streamed) = AsyncStream(NOSTR_filter_event_TYPE.self, { cont in
+				
+			})
+			self.baseFilter = filter
+			self.handlerFunction = handler
+		}
+		public func handleMatches(_ events:[any NOSTR_filter_TYPE]) {
+			handlerFunction()
+		}
+	}
+}
+
+extension nostr.Filter.Handled {
+    public var uids: Set<Event.Signed.UID>? {
+        return baseFilter.uids
     }
 
-	public var genericTags: [Character:[any NOSTR_tag_index]]? {
-		return self.tags
-	}
+    public var kinds: Set<NOSTR_filter_TYPE.NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE>? {
+        return baseFilter.kinds
+    }
 
-	public typealias NOSTR_filter_event_TYPE = nostr.Event.Signed
+    public var since:NOSTR_filter_TYPE.NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE? {
+        return baseFilter.since
+    }
 
-	public var NOSTR_filter_uids:Set<Event.Signed.UID>? {
-		return self.uids
-	}
-	public var NOSTR_filter_kinds:Set<UInt64>? {
-		return self.kinds
-	}
-	public var NOSTR_filter_since:Date? {
-		return self.since
-	}
-	public var NOSTR_filter_until:Date? {
-		return self.until
-	}
-	public var NOSTR_filter_limit:UInt32? {
-		return self.limit
-	}
-	public var NOSTR_filter_authors:Set<nostr.PublicKey>? {
-		return self.authors
-	}
+    public var until:NOSTR_filter_TYPE.NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE? {
+        return baseFilter.until
+    }
+
+    public var limit:UInt32? {
+        return baseFilter.limit
+    }
+
+    public var authors:Set<PublicKey>? {
+        return baseFilter.authors
+    }
+
+    public var genericTags: [Character:[any NOSTR_tag_index]]? {
+        return baseFilter.genericTags
+    }
+
+	
 }
 
 extension nostr.Filter:Hashable, Equatable {

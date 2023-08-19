@@ -1,6 +1,5 @@
 // (c) tanner silva 2023. all rights reserved.
-
-public protocol NOSTR_subscription_filter<NOSTR_filter_event_TYPE>:Codable {
+public protocol NOSTR_filter<NOSTR_filter_event_TYPE>:Codable {
 	/// the underlying type that this filter is representing.
 	/// - this is used to natively encode and decode the events associated with this filter.
 	associatedtype NOSTR_filter_event_TYPE:NOSTR_event_signed = nostr.Event.Signed
@@ -23,21 +22,18 @@ public protocol NOSTR_subscription_filter<NOSTR_filter_event_TYPE>:Codable {
 
 	/// main initializer for the filter.
 	init(uids:Set<Event.Signed.UID>?, kinds:Set<NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE>?, since:NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE?, until:NOSTR_filter_event_TYPE.NOSTR_event_date_TYPE?, limit:UInt32?, authors:Set<nostr.PublicKey>?, genericTags:[Character:[any NOSTR_tag_index]]?)
-
-	/// determines if the given event matches the filter (requires that the event and filter events are of the same kind type)
-	func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE
-	/// returns true if the filter is empty (contains no criteria)
-	func isEmpty() -> Bool
 }
 
-extension NOSTR_subscription_filter {
+// implements some default functionality for the filter
+extension NOSTR_filter {
+	/// determines if the given event matches the filter (requires that the event and filter events are of the same kind type)
 	public func matches<E>(_ event:E) -> Bool where E:NOSTR_event_signed, E.NOSTR_event_kind_TYPE == NOSTR_filter_event_TYPE.NOSTR_event_kind_TYPE {
-		if self.uids != nil {
+		if self.uids != nil && self.uids!.count > 0 {
 			if self.uids!.contains(event.uid) {
 				return true
 			}
 		}
-		if self.kinds != nil {
+		if self.kinds != nil && self.kinds!.count > 0 {
 			if self.kinds!.contains(event.kind) {
 				return true
 			}
@@ -47,17 +43,17 @@ extension NOSTR_subscription_filter {
 				return true
 			}
 		}
-		if let until = self.until {
-			if event.date.NOSTR_date_unixInterval < until.NOSTR_date_unixInterval {
+		if self.until != nil {
+			if event.date.NOSTR_date_unixInterval < self.until!.NOSTR_date_unixInterval {
 				return true
 			}
 		}
-		if let authors = self.authors {
-			if authors.contains(event.author) {
+		if self.authors != nil && self.authors!.count > 0 {
+			if authors!.contains(event.author) {
 				return true
 			}
 		}
-		if genericTags != nil {
+		if genericTags != nil && genericTags!.count > 0 {
 			// convert the tags into a dictionary of names and their corresponding index values
 			let checkEventTags = event.tags.asNamedDictionary()
 			// for each generic row that is in this event
@@ -88,7 +84,7 @@ extension NOSTR_subscription_filter {
 }
 
 // default implementation of codable
-extension NOSTR_subscription_filter {
+extension NOSTR_filter {
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.container(keyedBy: CodingKeys.self)
 		if self.uids != nil {

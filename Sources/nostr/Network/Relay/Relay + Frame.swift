@@ -4,14 +4,15 @@ extension Relay {
 	/// a container struct that is used to package and serialize contents into a relay frame.
 	public struct EncodingFrame {
 		/// the identifying name of the frame (identifies the data that will follow)
-		internal let name:String
+		public let name:String
 
 		/// the contents of the frame following the name.
-		internal let contents:[any Codable]
+		public let contents:[any Codable]
 	}
 }
 
 extension Relay.EncodingFrame:Encodable {
+	// implimentation of the Encodable protocol
 	public func encode(to encoder:Encoder) throws {
 		var container = encoder.unkeyedContainer()
 		try container.encode(self.name)

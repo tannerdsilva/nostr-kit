@@ -39,8 +39,10 @@ public struct Relay {
 	/// 	- event: the signed event to post
 	/// - returns: an EventLoopFuture that will eventually return the date that the event was confirmed to be posted, or a failure if unsuccessful.
 	public func write<E>(event:E) -> EventLoopFuture<Date> where E:NOSTR_event_signed {
+
 		// the promise that ties to the NIP-20 response for the published event
 		let returnPromise = self.handler.okHandler.createNIP20Promise(for:event.uid)
+
 		// the promise that ties to the write operation
 		let writePromise = self.channel.eventLoop.makePromise(of:Void.self)
 		writePromise.futureResult.whenComplete {
@@ -64,14 +66,17 @@ public struct Relay {
 		return returnPromise.futureResult
 	}
 
-	public func subscribe<S>(_ subscription:S) -> EventLoopFuture<Void> where S:NOSTR_subscription {
+	public func subscribe<S>(_ subscription:S, using bufferingPolicy:AsyncThrowingStream<[any NOSTR_event_signed], Swift.Error>.Continuation.BufferingPolicy = .bufferingNewest(64)) -> EventLoopFuture<nostr.Relay.Subscription> where S:NOSTR_subscription {
 		return channel.eventLoop.submit({
+			let makeStoredStream = AsyncThrowingStream([any NOSTR_event_signed].self, bufferingPolicy:bufferingPolicy) { continuation in
+				return self.eventHandler.registerStored(subscription:subscription.NOSTR_subscription_sid, continuation:continuation)
+			}
+			let makeStream = AsyncThrowingStream([any NOSTR_event_signed].self, bufferingPolicy:bufferingPolicy) { continuation in
+				return self.eventHandler.registerStreamed(subscription:subscription.NOSTR_subscription_sid, continuation:continuation)
+			}
 			// register the subscription in the event handler before the subscription is sent to the relay
 			self.eventHandler.registerSubscription(subscription)
-		}).flatMap {
-			// send the subscription to the relay
-			self.channel.write(subscription.NOSTR_frame_encode())
-		}
+		})
 	}
 }
 

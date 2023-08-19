@@ -1,34 +1,34 @@
 // (c) tanner silva 2023. all rights reserved.
 
-public protocol NOSTR_subscription_consumer<NOSTR_subscription_event_TYPE> {
-	associatedtype NOSTR_subscription_event_TYPE:NOSTR_event_signed
+/// a protocol for expressing a type that can handle the inbound events from a subscription.
+/// by implementing this type, you are committed to operating in this basic fashion.
+public protocol NOSTR_subscription_consumer<NOSTR_subscription_TYPE> {
+	/// the type of subscription that this consumer is handling
+	associatedtype NOSTR_subscription_TYPE:NOSTR_subscription
 
-	/// called for new events after the eose frame is received
-	func NOSTR_subscription_consumer_receive_streamed_event(_ events:[NOSTR_subscription_event_TYPE])
+	/// the async stream for handling the stored events.
+	/// - written by external actors, read by the type that conforms to this protocol.
+	var NOSTR_subscription_consumer_store:AsyncThrowingStream<[NOSTR_subscription_TYPE.NOSTR_subscription_event_TYPE], Swift.Error> { get set }
+	
+	/// the async stream for handling the streamed events.
+	/// - written by external actors, read by the type that conforms to this protocol.
+	var NOSTR_subscription_consumer_stream:AsyncThrowingStream<[NOSTR_subscription_TYPE.NOSTR_subscription_event_TYPE], Swift.Error> { get set }
 
-	/// called for new events before the eose frame is received
-	func NOSTR_subscription_consumer_receive_stored_event(_ events:[NOSTR_subscription_event_TYPE])
-
-	/// called when the end of stored events is reached
-	func NOSTR_subscription_consumer_receive_eose()
+	/// the task that handles the stored events. the type will assign this when the `launchConsumerTask()` function is called.
+	var NOSTR_subscription_consumer_task:Task<Void, Swift.Error>? { get }
 }
 
 public protocol NOSTR_subscription:NOSTR_frame_encodable {
-	/// the event type that is associated with this subscription
 	associatedtype NOSTR_subscription_event_TYPE:NOSTR_event_signed
-	/// the type of consumer that is associated with this subscription
-	associatedtype NOSTR_subscription_consumer_TYPE:NOSTR_subscription_consumer<NOSTR_subscription_event_TYPE>
 
 	/// the subscription id
 	var NOSTR_subscription_sid:String { get }
 
 	/// the filters associated with this subscription
-	var NOSTR_subscription_filters:[any NOSTR_subscription_filter<NOSTR_subscription_event_TYPE>] { get }
-
-	/// the consumer for this subscription
-	var NOSTR_subscription_consumer:NOSTR_subscription_consumer_TYPE { get }
+	var NOSTR_subscription_filters:[any NOSTR_filter] { get }
 }
 
+// default implementation for NOSTR_frame
 extension NOSTR_subscription {
 	public func NOSTR_frame_encode() -> Relay.EncodingFrame {
 		var buildContents:[any Codable] = [self.NOSTR_subscription_sid]
