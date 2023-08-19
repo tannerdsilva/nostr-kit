@@ -16,6 +16,8 @@ extension Relay {
 		internal let logger = makeDefaultLogger(label:"nostr-net:relay-handler:EVENT", logLevel:.debug)
 		#endif
 
+		private let channel:Channel
+
 		/// the active subscriptions that are being handled.
 		private var activeSubscriptions:Set<String>
 		/// the active subscriptions and their underlying instances that are being handled.
@@ -38,12 +40,57 @@ extension Relay {
 		/// hander for the EOSE frame
 		private let eoseHandler:EOSEHandler
 
+		/// schedules the next flush of pending events based on the current rate-limiting time and channel event loop.
+		/// - will attempt to cancel any previously scheduled flush tasks that are scheduled.
+		/// - NOTE: MUST be called within the event loop
+		private func scheduleNextFlush() {
+			if self.scheduledFlush != nil {
+				self.scheduledFlush!.cancel()
+			}
+			self.scheduledFlush = self.channel.eventLoop.scheduleTask(in:self.rateLimitTime) { [self] in
+				self.flushPending()
+			}
+		}
+
+		/// flushes all the pending events to their respective continuations.
+		/// - NOTE: MUST be called within the event loop
+		private func flushPending() {
+			// iterate through each subscription and flush the pending events based on their status.
+			// eose are flushed and toggled immediately, so this function does not need to handle any eose cases.
+			
+			// this is where the pending subscription events are modified as they are flushed to the various continuations.
+			var modifySubs = subscriptions_pending
+			defer {
+				// reassign the new subscriptions_pending after this function is done.
+				self.subscriptions_pending = modifySubs
+			}
+
+			// loop through each subscription and flush the pending events if they exist.
+			for (curSubID, curEvents) in subscriptions_pending {
+				if curEvents.count > 0 {
+					switch subscription_hasReachedEOSE[curSubID]! {
+						case true:
+							let streamedCont = self.subscription_streamedCont[curSubID]!
+							streamedCont.yield(curEvents)
+							modifySubs[curSubID] = []
+						case false:
+							let storedCont = self.subscription_storedCont[curSubID]!
+							storedCont.yield(curEvents)
+							modifySubs[curSubID] = []
+					}
+				}
+			}
+
+			self.scheduledFlush = nil
+		}
+
 		/// initialize the EVENT frame handler with the given configuration.
 		/// - parameters:
 		///   - configuration: the client configuration that is being used
 		///   - eoseHandler: the EOSE frame handler that is being used.
 		/// - NOTE: since this EVENT frame handler takes the EOSE frame handler as an initialization parameter, that means it handles any procedural requirements or needs around this handler internally.
-		init(configuration:Relay.Client.Configuration, eoseHandler:EOSEHandler) {
+		init(channel:Channel, configuration:Relay.Client.Configuration, eoseHandler:EOSEHandler) {
+			self.channel = channel
 			self.rateLimitTime = configuration.eventHoldTime
 			self.eoseHandler = eoseHandler
 			self.activeSubscriptions = Set<String>()
@@ -100,27 +147,18 @@ extension Relay {
 			#endif
 		}
 
-		/// deregisters a stored subscription continuation for the EVENT frame handler.
+		/// deregisters the subscription with the EVENT frame handler.
+		/// - NOTE: the continuations that are registered with the EVENT frame handler are automatically deregistered internally. you do not need to deregister them yourself (as you notice, the functions to deregister do not exist).
 		/// - WARNING: MUST be called within the event loop
-		/// - WARNING: caller of this function is responsible for deregistering the subscription immediately after the async streams are deregistered.
-		internal func deregisterStreamed(subscription:String) {
-			self.subscription_streamedCont[subscription] = nil
-		}
-
-		/// deregisters a streamed subscription continuation for the EVENT frame handler.
-		/// - WARNING: MUST be called within the event loop
-		/// - WARNING: caller of this function is responsible for deregistering the subscription immediately after the async streams are deregistered.
-		internal func deregisterStored(subscription:String) {
-			self.subscription_storedCont[subscription] = nil
-		}
-
-		/// deregisters the subscription with the EVENT frame handler
-		/// - WARNING: MUST be called within the event loop
-		/// - WARNING: caller of this function is responsible for deregistering the asyncstream continuations before calling this function.
 		internal func deregisterSubscription<D>(_ subscription:D) where D:NOSTR_subscription {
 			let sid = subscription.NOSTR_subscription_sid
-			guard activeSubscriptions.remove(sid) != nil else { return }
-			self.subscriptions.removeValue(forKey:sid)
+			guard activeSubscriptions.remove(sid) != nil else {
+				#if DEBUG
+				logger.notice("attempted to deregister subscription '\(sid)' that was not registered.")
+				#endif
+				return	
+			}
+			_ = self.subscriptions.removeValue(forKey:sid)
 			let getEvents = self.subscriptions_pending.removeValue(forKey:sid)!
 			switch self.subscription_hasReachedEOSE.removeValue(forKey:sid)! {
 				case true:
@@ -132,21 +170,16 @@ extension Relay {
 					streamedCont.finish()
 				case false:
 					// finish both the streamed and stored continuations
+					// starting with stored
 					let storedCont = self.subscription_storedCont.removeValue(forKey:sid)!
 					if getEvents.count > 0 {
 						storedCont.yield(getEvents)
 					}
 					storedCont.finish()
-
+					// now streamed
+					let streamedCont = self.subscription_streamedCont.removeValue(forKey:sid)!
+					streamedCont.finish()
 			}
-			subscription_hasReachedEOSE[subscription.NOSTR_subscription_sid] = nil
-			
-			#if DEBUG
-			logger.trace("deregistered subscription '\(subscription.NOSTR_subscription_sid)'.")
-			if self.subscription_storedCont[subscription.NOSTR_subscription_sid] == nil || self.subscription_streamedCont[subscription.NOSTR_subscription_sid] == nil {
-				logger.critical("you must deregister asyncstreams for stored and streamed events before calling `deregisterSubscription<D>`")
-			}
-			#endif
 		}
 
 		/// MUST be called within the event loop
@@ -169,9 +202,7 @@ extension Relay {
 			subscriptions_pending[getSub.NOSTR_subscription_sid] = eventsPendingList
 
 			if scheduledFlush == nil {
-				scheduledFlush = context.eventLoop.scheduleTask(in:rateLimitTime) { [self] in
-					self.flushPending()
-				}
+				self.scheduleNextFlush()
 			}
 		}
 
